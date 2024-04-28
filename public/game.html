@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="style.css" rel="stylesheet">
+    <title>TruKo!</title>
+    <link id="title-icon" rel="icon" type="image/x-icon" href="images/truko.jpeg">
+</head>
+<body>
+<div id="header">
+    <insert><img src="images/trucoimg1.jpeg" alt="img not found"></insert>
+    <p id="title">TruKo</p>
+    <insert><img src="images/trucoimg1.jpeg" alt="img not found"></insert>
+</div>
+<section id="assetsjogo">
+    <div id='cartas' hidden>
+<!--        __________________ 1º Pessoa __________________ -->
+        <div id="1pessoa">
+            <img src='images/cartas/C_2.png' alt='' id="1pessoa1carta" class="tamanhoimgcarta">
+            <img src='images/cartas/C_3.png' alt='' id="1pessoa2carta" class="tamanhoimgcarta">
+            <img src='images/cartas/C_4.png' alt='' id="1pessoa3carta" class="tamanhoimgcarta">
+        </div>
+<!--        __________________ 2º Pessoa __________________ -->
+        <div id="2pessoa">
+            <img src='images/cartas/C_5.png' alt='' id="2pessoa1carta" class="tamanhoimgcarta">
+            <img src='images/cartas/C_6.png' alt='' id="2pessoa2carta" class="tamanhoimgcarta">
+            <img src='images/cartas/C_7.png' alt='' id="2pessoa3carta" class="tamanhoimgcarta">
+        </div>
+<!--        __________________ 3º Pessoa __________________ -->
+        <div id="3pessoa">
+            <img src='images/cartas/C_A.png' alt='' id="3pessoa1carta" class="tamanhoimgcarta">
+            <img src='images/cartas/C_J.png' alt='' id="3pessoa2carta" class="tamanhoimgcarta">
+            <img src='images/cartas/C_K.png' alt='' id="3pessoa3carta" class="tamanhoimgcarta">
+        </div>
+<!--        __________________ 4º Pessoa __________________ -->
+        <div id="4pessoa">
+            <img src='images/cartas/C_A.png' alt='' id="4pessoa1carta" class="tamanhoimgcarta">
+            <img src='images/cartas/C_J.png' alt='' id="4pessoa2carta" class="tamanhoimgcarta">
+            <img src='images/cartas/C_K.png' alt='' id="4pessoa3carta" class="tamanhoimgcarta">
+        </div>
+    </div>
+    <div id='tabuleiro' hidden>
+        <!--        __________________ Tabuleiro __________________ -->
+        <img src='images/cartas/C_Q.png' alt='' id="mesa"> <!-- É a mesa literalmente, mesa de madeira -->
+        <img src='images/cartas/C_Q.png' alt='' id="vira"> <!-- Carta que vira para definir a manilha -->
+        <img src='images/cartas/E_2.png' alt='' id="baralho"> <!-- O deck de baralho que fica do ladinho -->
+    </div>
+</section>
+<div id="footer">
+    <insert><img id="imgfooter1" src="images/trucoimg1.jpeg" alt="img not found"></insert>
+    <div>
+        <p id="playeridfooter">Seu Nome: Jogo não iniciado.</p>
+        <p id="seutimefooter">Seu time: Jogo não iniciado.</p>
+        <p id="cartasrestantesfooter">Seu PlayerID: Jogo não iniciado.</p>
+    </div>
+    <insert><img id="imgfooter2" src="images/trucoimg1.jpeg" alt="img not found"></insert>
+</div>
+
+    <script src="game.js" type="text/javascript"></script>
+    <script src="design/misc.js" type="text/javascript"></script>
+    <script src="design/eastereggs.js" type="text/javascript"></script>
+    <script src="design/configuradorimg.js" type="text/javascript"></script>
+</body>
+</html>

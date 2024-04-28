@@ -1,0 +1,121 @@
+body{
+    background-color: #296317;
+    margin: 0rem;
+}
+
+/* header */
+#header{
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    background-color: dodgerblue;
+    padding-top: 20px;
+}
+
+#title{
+    font-size: 50px;
+    font-weight: bolder;
+    padding-right: 50px;
+    padding-left: 50px;
+}
+
+
+/* footer */
+
+#footer{
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    background-color: dodgerblue;
+    padding-top: 20px;
+    padding-bottom: 15px;
+    
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+
+    font-weight: bold;
+}
+
+#playeridfooter{
+    padding-right: 50px;
+    padding-left: 50px;
+}
+#seutimefooter{
+    padding-right: 50px;
+    padding-left: 50px;
+}
+
+#cartasrestantesfooter{
+    padding-right: 50px;
+    padding-left: 50px;
+}
+
+#imgfooter1{
+    padding-left: 20px;
+}
+
+#imgfooter2{
+    padding-right: 20px;
+}
+
+#eastereggs{
+    position: fixed;
+    top: 120px;
+}
+
+.tamanhoimgcarta{
+    width: 120px;
+    height: 179px;
+    border: gray 2px solid;
+    border-radius: 10px;
+}
+
+/*___________________________ PARTE DA DIV DE CARTAS ___________________________*/
+#cartas{
+
+}
+/*___________________________ IMAGENS TABULEIRO ___________________________*/
+
+#mesa{
+    position: fixed;
+
+}
+
+#vira{
+    position: fixed;
+
+}
+
+#baralho{
+    position: fixed;
+
+}
+
+/*___________________________ PESSOA 1 ___________________________*/
+#1pessoa{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    bottom: 150px;
+}
+
+
+/*___________________________ PESSOA 2 ___________________________*/
+#2pessoa{
+    position: absolute;
+
+}
+
+
+/*___________________________ PESSOA 3 ___________________________*/
+#3pessoa{
+    position: absolute;
+
+}
+/*___________________________ PESSOA 4 ___________________________*/
+#4pessoa{
+    position: absolute;
+
+}
+
