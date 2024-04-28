@@ -1,62 +1,75 @@
 const socket = io();
 
+
+document.addEventListener("click", printMousePos);
 //Colocar ID, time e nome
+
+// ____________________________IMPORTAÇÕES DA PARTE QUE FAZ O REGISTRO DO JOGADOR____________________________
+
 
 // ____________________________FUNÇÕES MAIN DO JOGO____________________________
 
-pontospartida = {time1: 0, time2: 0}
 pontosmao = {time1: 0, time2: 0}
+pontosrodada = {time1: 0, time2: 0}
 function gameStart(){
-    let jogadores = [] //criar id dos jogadores e pedir nomes via socket
+    jogadores = [] //criar id dos jogadores e pedir nomes via socket
     let time1 = [jogadores[0], jogadores[2]]
     let time2 = [jogadores[1], jogadores[3]]
 
-    let jogadorRandom = randomizar(jogadores).pop()
     //Mandar os jogadores para a visão do site pelo WebSocket
     //Definir posição jogadores -> WebSocket
 
+    mao(0)
 }
-function mao(){
-    if (pontosmao.time1 == 2) {
-        darpontos("time1", pontospartida)
+function mao(pontospartida){ // Uma mão é basicamente o ponto final do jogo, aquele que fizer 12 pontos ganha uma mão, pode valer 1,3,6,9,12
+    if (pontosrodada.time1 == 2) {
+        darpontos("time1", pontospartida) // passa os pontos da mao para o time1
+        zerarpontos(0) //zera os pontos da rodada
     }
-    else if (pontosmao.time2 == 2){
+    else if (pontosrodada.time2 == 2){
         darpontos("time2", pontospartida)
+        zerarpontos(0)
+    }
+    else if (pontosrodada.time1 == 2 && pontosrodada.time2 == 2){
+        // timevendedor = desempatechecker()
+        darpontos(timevencedor, pontospartida)
+        zerarpontos(0)
     }
     else{
         let baralho = gerarBaralhoRandom()
 
-        // Mandar cartas pros maninho
+        // Mandar cartas
         enviarCartas(baralho)
 
         // Colocar a primeira carta na mesa
-        let cartamesa = baralho.pop()
-        document.getElementById("vira").src = "tonao"
-        // Colocar carta no HTML -> Enviar via WebSocket para players
+        let vira = baralho.pop()
+        cartaparaImagem(vira, "vira")
 
+        let cartasrodada = []
+        rodada(cartasrodada)
     }
 }
 
-function rodada(){
-    for (let i = 0; i < 4; i++){
-        jogarcarta()
-    }
+function rodada(cartasrodada){ // Uma rodada é 1/3 da mão, onde os jogadores precisam de 2 pontos para vencer
+    cartasrodada = [turno(),turno(),turno(),turno()]
+    jogadoresrodada = jogadores
+    turno(jogadoresrodada)
     return timeponto
 }
+function turno(jogadoresturno){ // Um turno é 1/4 da rodada, onde um jogador joga a carta
+    // animacao de quando tá com o mouse em cima da carta ( fazer em um js de design )
+    let jogadoratual = jogadoresturno.pop(0)
+    //aparecer botão de truco para o jogador (fazer em um js de design) que se clicar roda a funcao de truco
+    //aparecer barra de tempo para jogador (fazer em um js de design)
+    //aparecer barra de tempo para todos os jogadores menos o jogador atual (fazer em um js de design)
+    //funcao para quando clicar na carta mandar para a funcao de clicar na carta
 
+    return cartajogada
+}
+//
+//     Roda a lista para a próxima pessoa
 function endGame(){
 
-}
-//____________________________ GERAR NOME E ID JOGADOR____________________________
-jogadorescarregados = []
-window.addEventListener('load', function jogador() {
-
-    let nome = window.prompt("Insira o seu nome: ") //WebSocket get ID ou sla oq
-    jogadorescarregados.push(nome) // Adicionar ID via Websocket
-})
-function jogador(ID){
-    let nome = window.prompt("Insira o seu nome: ") //WebSocket get ID ou sla oq
-    return [ID, nome]
 }
 
 // __________________________RANDOMIZAR COISAS____________________________
@@ -76,10 +89,10 @@ function randomizar(randomizarlista){
 // ____________________________DAR PONTOS AOS JOGADORES____________________________
 function darpontos(time, pontos){
     if (time == "time1"){
-        pontospartida.time1 = pontospartida.time1 + pontos
+        pontosmao.time1 = pontosmao.time1 + pontos
     }
 else if (time == "time2"){
-        pontospartida.time2 = pontospartida.time2 + pontos
+        pontosmao.time2 = pontosmao.time2 + pontos
     }
 }
 // ____________________________GERAR O BARALHO____________________________
@@ -93,6 +106,21 @@ function gerarBaralhoRandom(){
         }
     }
     return randomizar(baralhoinicial)
+}
+// ____________________________ZERAR PONTOS TIMES____________________________
+function zerarpontos(tipodeponto){
+    // tipos: 0- pontosrodada 1- pontosmao 2- zerar todos os pontos do jogo
+    if (tipodeponto == 0){
+        pontosrodada[0] = 0
+        pontosrodada[1] = 0
+    }
+    else if (tipodeponto == 1){
+        pontosmao[0] = 0
+        pontosmao[1] = 0
+    }
+    else if (tipodeponto == 2){
+        // zerar todos os pontos do jogo
+    }
 }
 // ____________________________ENVIAR CARTAS PARA JOGADORES____________________________
 function enviarCartas(baralho){
@@ -112,25 +140,12 @@ function enviarCartas(baralho){
 
     mostrarCartas(cartasplayer1, cartasplayer2, cartasplayer3, cartasplayer4)
 }
-// ____________________________MOSTRAR CARTAS E ELEMENTOS PARA JOGADORES____________________________
-function mostrarCartas(cp1, cp2, cp3, cp4){
 
-}
-// ____________________________FUNÇÃO PARA PROJETAR A AÇÃO DE JOGAR CARTA____________________________
-function jogarcarta(){
+// ____________________________PASSA UMA CARTA QUE ESTÁ EM VARIÁVEL DE LISTA PARA IMG ESPECÍFICA NO HTML____________________________
 
-}
-// ____________________________MOSTRAR COISAS ESPECIFICAS PARA JOGADORES____________________________
-
-function mostrarEspecifico(jogador, mudar){
-    document.getElementById("1pessoa1carta")
-    document.getElementById("1pessoa2carta")
-    document.getElementById("1pessoa3carta")
-
-    document.getElementById("2pessoa1carta")
-    document.getElementById("2pessoa2carta")
-    document.getElementById("2pessoa3carta")
-
+function cartaparaImagem(carta, imagem){
+    document.getElementById(imagem).src = `${carta[0]}_${carta[1]}.png`
+    document.getElementById(imagem).style.visibility = "visible";
 }
 
 // function vencedorrodada

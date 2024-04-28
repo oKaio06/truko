@@ -16,5 +16,7 @@ socket.emit('registrarnomes', nome);
 socket.on('enviarnome', (nome) => {
     const idpessoa = nome.idpessoa;
     document.getElementById("boasvindas").innerHTML = `Bem-vindo de volta, ${idpessoa}!`
+    registrarJogadores(idpessoa)
 });
+
 

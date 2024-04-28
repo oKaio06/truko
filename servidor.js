@@ -30,4 +30,3 @@ io.on('connection', (socket) => {
 });
 
 // ____________________________ Envio das ações de js em html ____________________________
-
