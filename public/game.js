@@ -9,12 +9,14 @@ document.addEventListener("click", printMousePos);
 
 // ____________________________FUNÇÕES MAIN DO JOGO____________________________
 
-pontosmao = {time1: 0, time2: 0}
-pontosrodada = {time1: 0, time2: 0}
+pontosmao = {time1: 0, time2: 0};
+pontosrodada = {time1: 0, time2: 0};
+let vira;
+let jogadores;
 function gameStart(){
     jogadores = [] //criar id dos jogadores e pedir nomes via socket
-    let time1 = [jogadores[0], jogadores[2]]
-    let time2 = [jogadores[1], jogadores[3]]
+    let time1 = [jogadores[0], jogadores[2]];
+    let time2 = [jogadores[1], jogadores[3]];
 
     //Mandar os jogadores para a visão do site pelo WebSocket
     //Definir posição jogadores -> WebSocket
@@ -42,7 +44,7 @@ function mao(pontospartida){ // Uma mão é basicamente o ponto final do jogo, a
         enviarCartas(baralho)
 
         // Colocar a primeira carta na mesa
-        let vira = baralho.pop()
+        vira = baralho.pop()
         cartaparaImagem(vira, "vira")
 
         let cartasrodada = []
@@ -51,19 +53,19 @@ function mao(pontospartida){ // Uma mão é basicamente o ponto final do jogo, a
 }
 
 function rodada(cartasrodada){ // Uma rodada é 1/3 da mão, onde os jogadores precisam de 2 pontos para vencer
-    cartasrodada = [turno(),turno(),turno(),turno()]
-    jogadoresrodada = jogadores
-    turno(jogadoresrodada)
+    let jogadoresrodada = jogadores
+    cartasrodada = [turno(jogadoresturno),turno(jogadoresturno),turno(jogadoresturno),turno(jogadoresturno)]
+    // Checar qual é a carta mais forte
+    checkmaiorCarta(cartasrodada, vira)
     return timeponto
 }
 function turno(jogadoresturno){ // Um turno é 1/4 da rodada, onde um jogador joga a carta
     // animacao de quando tá com o mouse em cima da carta ( fazer em um js de design )
-    let jogadoratual = jogadoresturno.pop(0)
+    let jogadoratual = jogadoresturno.shift()
     //aparecer botão de truco para o jogador (fazer em um js de design) que se clicar roda a funcao de truco
     //aparecer barra de tempo para jogador (fazer em um js de design)
     //aparecer barra de tempo para todos os jogadores menos o jogador atual (fazer em um js de design)
     //funcao para quando clicar na carta mandar para a funcao de clicar na carta
-
     return cartajogada
 }
 //
@@ -148,6 +150,71 @@ function cartaparaImagem(carta, imagem){
     document.getElementById(imagem).style.visibility = "visible";
 }
 
+// ____________________________CHECA QUAL A CARTA MAIS FORTE DO TURNO____________________________
+function checkmaiorCarta(cartas, manilha){
+    let cartasForca = {"4": 0, "5": 1, "6": 2, "7": 3, "D": 4, "J": 5, "K": 6, "A": 7, "2":8, "3": 9};
+    let nipeForca = {"O": 0, "E": 1, "C": 2, "P": 3};
+    let cartascheck = [["O", "4"], ["C", "4"], ["P", "4"], ["E", "A"], ]
+    let manilhacheck = "4"
+    let manilhas = []
+    let time1 = [cartascheck[0], cartascheck[2]]
+    let time2 = [cartascheck[1], cartascheck[3]]
+    cartasForca[manilhacheck] = 10
+    // INALTERÁVEL ACIMA ^^^^^^^^
+
+    let maiornipe = -1;
+    let maiorvalor = -1;
+    let maiorcarta;
+    let maiorcartaposicao;
+    let timevencedor;
+    // noinspection JSUnusedAssignment
+
+    // Checar o mais valor da carta
+    for (let i = 0; i < 4; i++) {
+        if (parseInt(cartasForca[cartascheck[i][1]]) >= maiorvalor){
+            maiorvalor = parseInt(cartasForca[cartascheck[i][1]]);
+            maiorcartaposicao = i;
+            maiorcarta = cartascheck[i];
+            // Lógica para definir o ganhador do round
+            if (maiorcarta in time1){
+                timevencedor = 1;
+            }
+            else{
+                timevencedor = 2;
+            }
+            if (cartascheck[i][1] == manilhacheck){
+                manilhachecks.push(cartascheck[i])
+            }
+        }
+    }
+
+    // Tira o maior valor para checar se ele é repetido
+    cartascheck.splice(maiorcartaposicao, 1);
+
+    timevencedor = 1;
+    // Checa se o maior valor da carta mais forte é repetido
+    for (let i = 0; i < 3; i++) {
+        if (parseInt(cartasForca[cartascheck[i][1]]) == parseInt(cartasForca[maiorcarta[1]])){ // Testes funcionam até aqui, o resto é VARZEA
+            timevencedor = 3; // Representa que ambos os times ganham pontos
+        }
+    }
+    // Checa se tem uma manilha e qual é a manilha mais forte
+    if (manilhachecks.length >= 2){
+        for (let i = 0; i < manilhachecks.length; i++) {
+            if (parseInt(nipeForca[manilhachecks[i][0]]) > maiornipe){
+                maiornipe = parseInt(nipeForca[manilhachecks[i][0]])
+                maiorcarta = manilhachecks[i]
+                if (maiorcarta in time1){
+                    timevencedor = 1;
+                }
+                else{
+                    timevencedor = 2;
+                }
+            }
+        }
+    }
+    return [maiorcarta, timevencedor]
+}
 // function vencedorrodada
 //
 //

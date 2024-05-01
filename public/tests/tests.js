@@ -64,67 +64,68 @@
 // console.log(cartasForca["4"])
 
 
-//     function checkmaiorCarta(cartas, manilha)
-let cartasForca = {"4": 0, "5": 1, "6": 2, "7": 3, "D": 4, "J": 5, "K": 6, "A": 7, "2":8, "3": 9};
-let nipeForca = {"O": 0, "E": 1, "C": 2, "P": 3};
-let cartas = [["O", "4"], ["C", "4"], ["P", "4"], ["E", "A"], ]
-let manilha = "4"
-let manilhas = []
-let time1 = [cartas[0], cartas[2]]
-let time2 = [cartas[1], cartas[3]]
-cartasForca[manilha] = 10
-// INALTERÁVEL ACIMA ^^^^^^^^
+function checkmaiorCarta(cartas, manilha){
+    let cartasForca = {"4": 0, "5": 1, "6": 2, "7": 3, "D": 4, "J": 5, "K": 6, "A": 7, "2":8, "3": 9};
+    let nipeForca = {"O": 0, "E": 1, "C": 2, "P": 3};
+    let cartascheck = [["O", "4"], ["C", "4"], ["P", "4"], ["E", "A"], ]
+    let manilhacheck = "4"
+    let manilhas = []
+    let time1 = [cartascheck[0], cartascheck[2]]
+    let time2 = [cartascheck[1], cartascheck[3]]
+    cartasForca[manilhacheck] = 10
+    // INALTERÁVEL ACIMA ^^^^^^^^
 
-let maiornipe = -1;
-let maiorvalor = -1;
-let maiorcarta;
-let maiorcartaposicao;
-let timevencedor;
-// noinspection JSUnusedAssignment
+    let maiornipe = -1;
+    let maiorvalor = -1;
+    let maiorcarta;
+    let maiorcartaposicao;
+    let timevencedor;
+    // noinspection JSUnusedAssignment
 
-// Checar o mais valor da carta
-for (let i = 0; i < 4; i++) {
-    if (parseInt(cartasForca[cartas[i][1]]) >= maiorvalor){
-        maiorvalor = parseInt(cartasForca[cartas[i][1]]);
-        maiorcartaposicao = i;
-        maiorcarta = cartas[i];
-        // Lógica para definir o ganhador do round
-        if (maiorcarta in time1){
-            timevencedor = 1;
-        }
-        else{
-            timevencedor = 2;
-        }
-        if (cartas[i][1] == manilha){
-            manilhas.push(cartas[i])
-        }
-    }
-}
-
-// Tira o maior valor para checar se ele é repetido
-cartas.splice(maiorcartaposicao, 1);
-
-timevencedor = 1;
-// Checa se o maior valor da carta mais forte é repetido
-for (let i = 0; i < 3; i++) {
-    if (parseInt(cartasForca[cartas[i][1]]) == parseInt(cartasForca[maiorcarta[1]])){ // Testes funcionam até aqui, o resto é VARZEA
-        timevencedor = 3; // Representa que ambos os times ganham pontos
-    }
-}
-// Checa se tem uma manilha e qual é a manilha mais forte
-if (manilhas.length >= 2){
-    for (let i = 0; i < manilhas.length; i++) {
-        if (parseInt(nipeForca[manilhas[i][0]]) > maiornipe){
-            maiornipe = parseInt(nipeForca[manilhas[i][0]])
-            maiorcarta = manilhas[i]
+    // Checar o mais valor da carta
+    for (let i = 0; i < 4; i++) {
+        if (parseInt(cartasForca[cartascheck[i][1]]) >= maiorvalor){
+            maiorvalor = parseInt(cartasForca[cartascheck[i][1]]);
+            maiorcartaposicao = i;
+            maiorcarta = cartascheck[i];
+            // Lógica para definir o ganhador do round
             if (maiorcarta in time1){
                 timevencedor = 1;
             }
             else{
                 timevencedor = 2;
             }
+            if (cartascheck[i][1] == manilhacheck){
+                manilhachecks.push(cartascheck[i])
+            }
         }
     }
-}
 
-console.log(`Naipe:${maiorcarta[0]} Carta:${maiorcarta[1]} Time vencedor da rodada:${timevencedor}`)
+    // Tira o maior valor para checar se ele é repetido
+    cartascheck.splice(maiorcartaposicao, 1);
+
+    timevencedor = 1;
+    // Checa se o maior valor da carta mais forte é repetido
+    for (let i = 0; i < 3; i++) {
+        if (parseInt(cartasForca[cartascheck[i][1]]) == parseInt(cartasForca[maiorcarta[1]])){ // Testes funcionam até aqui, o resto é VARZEA
+            timevencedor = 3; // Representa que ambos os times ganham pontos
+        }
+    }
+    // Checa se tem uma manilha e qual é a manilha mais forte
+    if (manilhachecks.length >= 2){
+        for (let i = 0; i < manilhachecks.length; i++) {
+            if (parseInt(nipeForca[manilhachecks[i][0]]) > maiornipe){
+                maiornipe = parseInt(nipeForca[manilhachecks[i][0]])
+                maiorcarta = manilhachecks[i]
+                if (maiorcarta in time1){
+                    timevencedor = 1;
+                }
+                else{
+                    timevencedor = 2;
+                }
+            }
+        }
+    }
+    return [maiorcarta, timevencedor]
+}
+// console.log(`Naipe:${maiorcarta[0]} Carta:${maiorcarta[1]} Time vencedor da rodada:${timevencedor}`)
