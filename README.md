@@ -1,3 +1,3 @@
-Esse é o meu primeiro projeto oficial desde o início do meu aprenndizado em Front-End, decidi realizar um jogo baseado no truco paulista pois meus colegas gostam e eu também passei a gostar bastante do jogo.
+Esse é o meu primeiro projeto oficial desde o início do meu aprendizado em Front-End.
 
-TruKo! Porque tudo que tem K é melhor!
+TruKo! Porque com K é melhor!
