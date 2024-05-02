@@ -9,7 +9,7 @@ console.log("The Dark Night Returns".black)
 
 // ____________________________ Parte do registro de conexões do jogador :D ____________________________
 const jogadores = {};
-let jogadoresconectados = []
+const jogadoresconectados = []
 let id2;
 io.on('connection', (socket) => {
 
