@@ -1,10 +1,9 @@
-const socket = io();
+let nomejogadores = []
 
-
-document.addEventListener("click", printMousePos);
 //Colocar ID, time e nome
 
 // ____________________________IMPORTAÇÕES DA PARTE QUE FAZ O REGISTRO DO JOGADOR____________________________
+
 
 
 // ____________________________FUNÇÕES MAIN DO JOGO____________________________
@@ -12,9 +11,7 @@ document.addEventListener("click", printMousePos);
 pontosmao = {time1: 0, time2: 0};
 pontosrodada = {time1: 0, time2: 0};
 let vira;
-let jogadores;
 function gameStart(){
-    jogadores = [] //criar id dos jogadores e pedir nomes via socket
     let time1 = [jogadores[0], jogadores[2]];
     let time2 = [jogadores[1], jogadores[3]];
 
@@ -151,11 +148,9 @@ function cartaparaImagem(carta, imagem){
 }
 
 // ____________________________CHECA QUAL A CARTA MAIS FORTE DO TURNO____________________________
-function checkmaiorCarta(cartas, manilha){
+function checkmaiorCarta(cartascheck, manilhacheck){
     let cartasForca = {"4": 0, "5": 1, "6": 2, "7": 3, "D": 4, "J": 5, "K": 6, "A": 7, "2":8, "3": 9};
     let nipeForca = {"O": 0, "E": 1, "C": 2, "P": 3};
-    let cartascheck = [["O", "4"], ["C", "4"], ["P", "4"], ["E", "A"], ]
-    let manilhacheck = "4"
     let manilhas = []
     let time1 = [cartascheck[0], cartascheck[2]]
     let time2 = [cartascheck[1], cartascheck[3]]
@@ -215,6 +210,7 @@ function checkmaiorCarta(cartas, manilha){
     }
     return [maiorcarta, timevencedor]
 }
+
 // function vencedorrodada
 //
 //
