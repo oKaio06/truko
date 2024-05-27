@@ -1,3 +1,18 @@
+document.addEventListener("DOMContentLoaded", function() {
+    const socket = io()
+
+    function alterarTexto() {
+        let texto = document.getElementById("textolterar").textContent;
+        socket.emit('alterarcontexto', texto);
+        socket.on('alterartexto', content => {
+            document.getElementById("textolterar").innerHTML = content
+        });
+    }
+});
+
+
+
+
 let nomejogadores = []
 
 //Colocar ID, time e nome

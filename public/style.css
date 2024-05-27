@@ -1,18 +1,32 @@
 body{
-    background-color: #296317;
-    margin: 0rem;
+    background-image: url("images/background.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    margin: 0;
 }
 
 /* header */
-#header{
+#headerglobal{
+    display: flex;
+    flex-direction: row;
+}
+#header1{
     display: flex;
     justify-content: center;
     align-content: center;
     background-color: dodgerblue;
-    padding-top: 20px;
+    width: 25%;
+    margin-right: 50%;
+}
+#header2{
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    background-color: dodgerblue;
+    width: 25%;
 }
 
-#title{
+.title{
     font-size: 50px;
     font-weight: bolder;
     padding-right: 50px;
@@ -24,17 +38,26 @@ body{
 
 #footer{
     display: flex;
-    justify-content: center;
-    align-content: center;
-    background-color: dodgerblue;
-    padding-top: 20px;
-    padding-bottom: 15px;
-    
+
     position: absolute;
-    bottom: 0px;
+    bottom: 0;
     width: 100%;
 
     font-weight: bold;
+}
+#footer1{
+    background-color: dodgerblue;
+    width: 25%;
+    margin-right: 50%;
+}
+#footer1, #footer2 a{
+    text-align: center;
+}
+#footer2{
+    display: flex;
+    justify-content: center;
+    background-color: dodgerblue;
+    width: 25%;
 }
 
 #playeridfooter{
@@ -64,58 +87,150 @@ body{
     top: 120px;
 }
 
-.tamanhoimgcarta{
+
+.tamanhoimgcarta2{
+    width: 90px;
+    height: 134px;
+    border: gray 2px solid;
+    border-radius: 10px;
+}
+
+/*___________________________ PONTOS ___________________________*/
+
+#pontos{
+    background-color: dimgray;
+    width: 10%;
+    border: darkslategray 5px solid;
+    border-radius: 20px;
+
+    position: absolute;
+    top: 2%;
+    left: 27.5%;
+
+    font-family: "Comic Sans MS";
+    font-weight: bold;
+    font-size: 15px;
+}
+
+#pontos div{
+    display: flex;
+    align-items: center;
+    padding: 2px;
+}
+
+/*___________________________ PARTE DA DIV DE CARTAS ___________________________*/
+
+/*___________________________ PESSOA 1 ___________________________*/
+#1pessoa{
+    display: flex;
+    justify-content: space-around;
+}
+
+#background{
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+.c1pessoa1carta, .c1pessoa2carta, .c1pessoa3carta{
     width: 120px;
     height: 179px;
     border: gray 2px solid;
     border-radius: 10px;
 }
 
-/*___________________________ PARTE DA DIV DE CARTAS ___________________________*/
-#cartas{
-
-}
-/*___________________________ IMAGENS TABULEIRO ___________________________*/
-
-#mesa{
-    position: fixed;
-
-}
-
-#vira{
-    position: fixed;
-
-}
-
-#baralho{
-    position: fixed;
-
-}
-
-/*___________________________ PESSOA 1 ___________________________*/
-#1pessoa{
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    bottom: 150px;
-}
-
-
 /*___________________________ PESSOA 2 ___________________________*/
 #2pessoa{
-    position: absolute;
-
+    display: flex;
+    justify-content: space-around;
 }
-
-
 /*___________________________ PESSOA 3 ___________________________*/
 #3pessoa{
-    position: absolute;
-
-}
-/*___________________________ PESSOA 4 ___________________________*/
-#4pessoa{
-    position: absolute;
-
+    display: flex;
+    justify-content: space-around;
 }
 
+/*___________________________ BOTÃO TRUKO ___________________________*/
+.button {
+    padding: 16px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+
+.truko {
+    background-color: yellowgreen;
+    color: black;
+    font-size: 50px;
+    -webkit-text-stroke: 3px black;
+    border: black 3px solid;
+    border-radius: 10px;
+    margin: 4px 2px;
+}
+
+.truko:hover {
+    background-color: darkgoldenrod;
+    color: gold;
+}
+
+/*___________________________ BOTÕES DE TRUKO ___________________________*/
+
+#positionbotoes{
+    position: absolute;
+    bottom: 25%;
+    left: 33%;
+    width: 30%;
+}
+
+#botoes{
+    display: flex;
+    justify-content: space-around;
+}
+
+.aceitar {
+    background-color: limegreen;
+    color: black;
+    -webkit-text-stroke: 1px black;
+    border: black 3px solid;
+    border-radius: 10px;
+    font-size: 25px;
+    margin: 2px 1px;
+}
+.aceitar:hover {
+    color: lawngreen;
+}
+
+.correr {
+    background-color: indianred;
+    color: black;
+    -webkit-text-stroke: 1px black;
+    border: black 3px solid;
+    border-radius: 10px;
+    font-size: 25px;
+    margin: 2px 1px;
+}
+.correr:hover {
+    color: orangered;
+}
+
+.mais {
+    background-color: goldenrod;
+    color: black;
+    -webkit-text-stroke: 1px black;
+    border: black 3px solid;
+    border-radius: 10px;
+    font-size: 30px;
+    margin: 2px 1px;
+}
+.mais:hover {
+    color: gold;
+}
+
+/*___________________________ ASSETS DOS TIMES ___________________________*/
+
+#time1{
+    display: flex;
+    justify-content: center;
+}
