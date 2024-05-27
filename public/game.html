@@ -7,36 +7,62 @@
     <link id="title-icon" rel="icon" type="image/x-icon" href="images/truko.jpeg">
 </head>
 <body>
-<div id="header">
-    <insert><img src="images/trucoimg1.jpeg" alt="img not found"></insert>
-    <p id="title">TruKo</p>
-    <insert><img src="images/trucoimg1.jpeg" alt="img not found"></insert>
+<div id="headerglobal">
+    <div id="header1">
+        <p class="title">TruKo</p>
+    </div>
+    <div id="header2">
+        <p class="title">TruKo</p>
+    </div>
 </div>
-<section id="assetsjogo">
-    <div id='cartas' hidden>
-<!--        __________________ 1º Pessoa __________________ -->
-        <div id="1pessoa">
-            <img src='images/cartas/C_2.png' alt='' id="1pessoa1carta" class="tamanhoimgcarta">
-            <img src='images/cartas/C_3.png' alt='' id="1pessoa2carta" class="tamanhoimgcarta">
-            <img src='images/cartas/C_4.png' alt='' id="1pessoa3carta" class="tamanhoimgcarta">
+
+<!-- _______________ ASSETS DO JOGO _______________ -->
+<section id="assetsjogo" hidden>
+    <div id="pontos">
+        <div>
+            <p>Seu time:</p>
+            <img src='images/circulo.png' alt='' width="25" height="25">
+            <img src='images/circulo.png' alt='' width="25" height="25">
+            <img src='images/circulo.png' alt='' width="25" height="25">
+            <p>10</p>
         </div>
-<!--        __________________ 2º Pessoa __________________ -->
-        <div id="2pessoa">
-            <img src='images/cartas/C_5.png' alt='' id="2pessoa1carta" class="tamanhoimgcarta">
-            <img src='images/cartas/C_6.png' alt='' id="2pessoa2carta" class="tamanhoimgcarta">
-            <img src='images/cartas/C_7.png' alt='' id="2pessoa3carta" class="tamanhoimgcarta">
+        <div>
+            <p>Outro time:</p>
+            <img src='images/circulo.png' alt='' width="25" height="25">
+            <img src='images/circulo.png' alt='' width="25" height="25">
+            <img src='images/circulo.png' alt='' width="25" height="25">
+            <p>10</p>
         </div>
-<!--        __________________ 3º Pessoa __________________ -->
-        <div id="3pessoa">
-            <img src='images/cartas/C_A.png' alt='' id="3pessoa1carta" class="tamanhoimgcarta">
-            <img src='images/cartas/C_J.png' alt='' id="3pessoa2carta" class="tamanhoimgcarta">
-            <img src='images/cartas/C_K.png' alt='' id="3pessoa3carta" class="tamanhoimgcarta">
+    </div>
+    <div id='cartas'>
+    <!--        __________________ 1º Pessoa __________________ -->
+        <div style="display: flex; justify-content: center;">
+            <div id="1pessoa" style="position: absolute; bottom: 5%;">
+                <a href="/jogarcarta" ><img src='images/cartas/C_2.png' alt='' class="c1pessoa1carta"></a>
+                <a href="/jogarcarta"><img src='images/cartas/C_3.png' alt='' class="c1pessoa2carta"></a>
+                <a href="/jogarcarta"><img src='images/cartas/C_4.png' alt='' class="c1pessoa3carta"></a>
+            </div>
         </div>
-<!--        __________________ 4º Pessoa __________________ -->
-        <div id="4pessoa">
-            <img src='images/cartas/C_A.png' alt='' id="4pessoa1carta" class="tamanhoimgcarta">
-            <img src='images/cartas/C_J.png' alt='' id="4pessoa2carta" class="tamanhoimgcarta">
-            <img src='images/cartas/C_K.png' alt='' id="4pessoa3carta" class="tamanhoimgcarta">
+    <!--        __________________ 2º Pessoa __________________ -->
+        <p style="position: absolute; left: 29.7%;"><img src='images/circulo.png' alt='' id="circulo1" width="150" height="150"></p>
+        <div id="2pessoa" style="position: absolute; left: 26%; top: 40%; transform: rotate(90deg);">
+            <img src='images/cartas/fundocarta.png' alt='' id="2pessoa1carta" class="tamanhoimgcarta2">
+            <img src='images/cartas/fundocarta.png' alt='' id="2pessoa2carta" class="tamanhoimgcarta2">
+            <img src='images/cartas/fundocarta.png' alt='' id="2pessoa3carta" class="tamanhoimgcarta2">
+        </div>
+    <!--        __________________ 3º Pessoa __________________ -->
+        <p style="position: absolute; right: 29.7%; bottom: 20%"><img src='images/circulo.png' alt='' id="circulo2" width="150" height="150"></p>
+        <div id="3pessoa" style="position: absolute; right: 26%; top: 40%; transform: rotate(270deg);">
+            <img src='images/cartas/fundocarta.png' alt='' id="3pessoa1carta" class="tamanhoimgcarta2">
+            <img src='images/cartas/fundocarta.png' alt='' id="3pessoa2carta" class="tamanhoimgcarta2">
+            <img src='images/cartas/fundocarta.png' alt='' id="3pessoa3carta" class="tamanhoimgcarta2">
+        </div>
+    <!--        __________________ 4º Pessoa __________________ -->
+        <p style="position: absolute; right: 35%; top: 4%"><img src='images/circulo.png' alt='' id="circulo3" width="150" height="150"></p>
+        <div id="4pessoa" style="position: absolute; left: 42%; top: 5%; transform: rotate(180deg);">
+            <img src='images/cartas/fundocarta.png' alt='' id="4pessoa1carta" class="tamanhoimgcarta2">
+            <img src='images/cartas/fundocarta.png' alt='' id="4pessoa2carta" class="tamanhoimgcarta2">
+            <img src='images/cartas/fundocarta.png' alt='' id="4pessoa3carta" class="tamanhoimgcarta2">
         </div>
     </div>
     <div id='tabuleiro' hidden>
@@ -45,21 +71,41 @@
         <img src='images/cartas/C_Q.png' alt='' id="vira"> <!-- Carta que vira para definir a manilha -->
         <img src='images/cartas/E_2.png' alt='' id="baralho"> <!-- O deck de baralho que fica do ladinho -->
     </div>
-</section>
-<div id="footer">
-    <insert><img id="imgfooter1" src="images/trucoimg1.jpeg" alt="img not found"></insert>
-    <div>
-        <p id="playeridfooter">Seu Nome: Jogo não iniciado.</p>
-        <p id="seutimefooter">Seu time: Jogo não iniciado.</p>
-        <p id="cartasrestantesfooter">Seu PlayerID: Jogo não iniciado.</p>
+    <div id='botaotruko' hidden>
+        <button class="button truko" style="position: absolute; left: 31%; bottom: 26%">TRUKO</button> <!-- Botão de Truko-->
     </div>
-    <insert><img id="imgfooter2" src="images/trucoimg1.jpeg" alt="img not found"></insert>
+    <div id="positionbotoes">
+        <div id="botoes">
+            <button class="button mais">+6</button> <!-- Botão de Mais Truko-->
+            <button class="button aceitar">ACEITAR</button> <!-- Botão de Aceitar Truko-->
+            <button class="button correr">CORRER</button> <!-- Botão de Correr Truko-->
+        </div>
+    </div>
+</section>
+
+<!-- _______________ MENU SELECIONAR TIMES _______________ -->
+<div id="time1">
+    <p id="textolterar">teste mudar texto</p>
+    <label>Texto:<input type="text" id="changetext"></label>
+    <button type="submit" onclick="alterarTexto()">Botao</button>
 </div>
 
+<div id="footer">
+    <div id="footer1">
+        <a>Quer ajudar a pagar minha terapia depois fazer esse jogo? Perfeito! Clique aqui para me apoiar! :D</a>
+    </div>
+    <div id="footer2">
+        <a>Quer ajudar a pagar minha terapia depois fazer esse jogo? Perfeito! Clique aqui para me apoiar! :D</a>
+<!--        <p id="playeridfooter">Seu Nome: Jogo não iniciado.</p>-->
+<!--        <p id="seutimefooter">Seu time: Jogo não iniciado.</p>-->
+<!--        <p id="cartasrestantesfooter">Seu PlayerID: Jogo não iniciado.</p>-->
+    </div>
+</div>
     <script src="game.js" type="text/javascript"></script>
     <script src="design/misc.js" type="text/javascript"></script>
     <script src="design/eastereggs.js" type="text/javascript"></script>
     <script src="design/configuradorimg.js" type="text/javascript"></script>
     <script src="playerregistros.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
 </body>
 </html>
