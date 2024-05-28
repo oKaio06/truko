@@ -36,14 +36,4 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('testeserv').innerHTML = `${message}`
     })
 
-    // Alterar texto teste
-    socket.on('alterartexto', info => {
-        document.getElementById("textolterar").innerHTML = info
-    });
 });
-
-
-function alterarTexto() {
-    let texto = document.getElementById("changetext").value
-    socket.emit('alterarcontexto', texto);
-}

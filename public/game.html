@@ -15,7 +15,6 @@
         <p class="title">TruKo</p>
     </div>
 </div>
-
 <!-- _______________ ASSETS DO JOGO _______________ -->
 <section id="assetsjogo" hidden>
     <div id="pontos">
@@ -84,12 +83,28 @@
 </section>
 
 <!-- _______________ MENU SELECIONAR TIMES _______________ -->
-<div id="time1">
-    <p id="textolterar">teste mudar texto</p>
-    <label>Texto:<input type="text" id="changetext"></label>
-    <button type="submit" onclick="alterarTexto()">Botao</button>
+<div id="timesbox">
+    <h2>Escolha seu Time!</h2>
+    <div id="times">
+        <div>
+            <p id="time1pessoa1">Vazio</p>
+            <p id="time1pessoa2">Vazio</p>
+            <button type="submit" onclick="selecionarTime('1')">Entrar no Time1</button>
+        </div>
+        <div>
+            <p id="time2pessoa1">Vazio</p>
+            <p id="time2pessoa2">Vazio</p>
+            <button type="submit" onclick="selecionarTime('2')">Entrar no Time2</button>
+        </div>
+    </div>
 </div>
 
+<div id="errormessagebox">
+    <span>ERRO</span>
+    <span id="errormsg">Mensagem Importante</span>
+</div>
+
+<!-- Footer fazer oq, é o visionário n tem jeito kkkkkkk to ficando doido-->
 <div id="footer">
     <div id="footer1">
         <a>Quer ajudar a pagar minha terapia depois fazer esse jogo? Perfeito! Clique aqui para me apoiar! :D</a>
@@ -105,7 +120,7 @@
     <script src="design/misc.js" type="text/javascript"></script>
     <script src="design/eastereggs.js" type="text/javascript"></script>
     <script src="design/configuradorimg.js" type="text/javascript"></script>
-    <script src="playerregistros.js" type="text/javascript"></script>
+    <script src="eventUpdater.js" type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
 </body>
 </html>
