@@ -230,7 +230,64 @@ body{
 
 /*___________________________ ASSETS DOS TIMES ___________________________*/
 
-#time1{
+#timesbox{
+    background: linear-gradient(90deg, #FFC0CB 50%, #00FFFF 5%);
+}
+
+#timesbox h2{
     display: flex;
     justify-content: center;
+}
+
+#times{
+    display: flex;
+    justify-content: center;
+}
+
+#times p{
+    font-size: 20px;
+    background-color: white;
+    margin: 2px;
+    width: 120px;
+}
+#times div{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 90px;
+
+    border: darkgray 3px solid;
+}
+
+/*___________________________ MESSAGEBOX ERROR ___________________________*/
+
+#errormessagebox{
+    position: absolute;
+    bottom: 20%;
+    left: 20%;
+    border-radius: 0.25rem;
+    --tw-bg-opacity: 1;
+    background-color: rgba(220, 38, 38, var(--tw-bg-opacity));
+    margin-bottom: 1px;
+    padding: 0.75rem;
+    opacity: 0;
+}
+
+#errormessagebox :nth-child(1){
+    border-radius: 9999px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1;
+    font-weight: bolder;
+    margin-right: 0.75rem;
+    background-color: rgba(239, 68, 68);
+    color: rgba(200, 200, 200);
+}
+#errormessagebox :nth-child(2){
+    color: rgba(200, 200, 200);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    margin-right: 0.5rem;
+
 }

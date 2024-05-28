@@ -10,17 +10,18 @@ console.log("The Dark Night Returns".black)
 // ____________________________ Parte do registro de conexões do jogador :D ____________________________
 const jogadores = {};
 const jogadoresPorId = {};
+const jogadoresPorNumero = {} // FUTURO: Alocar isso à lógica do truko, seria para controlar as pessoas de cada time
 const jogadoresconectados = []
+const times = {Time1: {"1": null, "2": null}, Time2: {"1": null, "2": null}}
+const nomestime = [];
 io.on('connection', (socket) => {
+
     socket.on('registrarnomes', nome => {
         const id = socket.id;
         jogadores[nome] = id;
         jogadoresPorId[id] = nome;
-        socket.emit('enviarnome', {idpessoa: nome});
         console.log(`[+] ${nome} se conectou ao TruKo!`)
         jogadoresConectados("adicionar", nome)
-        socket.to(jogadores[nome]).emit('message', 'for your eyes only');
-        console.log(socket.id)
     });
 
     socket.on('disconnect', () => {
@@ -43,9 +44,38 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('alterarcontexto', informacao => {
-        socket.emit('alterartexto', informacao)
+    // Adicionar pessoa no time
+    socket.on('entrartime', time => {
+        let id = socket.id
+        let timenum = time[time.length - 1]
+        let nome = jogadoresPorId[id];
+        let checkjogador = checarJogadorInclusoTimes(nome)
+        if(checkjogador){
+            socket.emit('mensagemerro', 'Você já está em um time!')
+        }
+        else{
+            if (times[time]['1'] == null && times[time]['2'] == null){
+                times[time]['1'] = nome
+                nomestime.push([nome, timenum, '1'])
+                io.sockets.emit('selecionarTimetext', nomestime)
+            }
+            else if(times[time]['2'] == null){
+                times[time]['2'] = nome
+                nomestime.push([nome, timenum, '2'])
+                io.sockets.emit('selecionarTimetext', nomestime)
+            }
+            else{
+                socket.emit('mensagemerro', 'O time que você quer entrar já está cheio!')
+            }
+        }
     });
+
+    // socket.on('receberEvento', evento, elemento, (id, jogadores) => {
+    //     if (evento == 'darcartas'){
+    //         updateImg('darcartas', elemento, id)
+    //     }
+    // })
+
 });
 
 // ____________________________ Logar/adicionar/remover jogadores conectados da lista ____________________________
@@ -66,10 +96,18 @@ function jogadoresConectados(acao, nome){
 
 // ____________________________ BIBLIOTECA PARA ATUALIZAR COISAS DO JOGO ____________________________
 
-function atualizarTodos(evento, elemento, id){
-    console.log("parei aqui")
+function updateImg(evento, elemento, id){
+    socket.emit('updateImg', evento, elemento, id)
 }
 
+function checarJogadorInclusoTimes(nome){
+    for (let i = 0; i < 3; i++){
+        if (nome == times["Time1"][`${i}`] || nome == times["Time2"][`${i}`]){
+            return true
+        }
+    }
+    return false
+}
 
 // ____________________________ TUDO ABAIXO É PARTE DA LÓGICA DO JOGO ____________________________
 // ____________________________ TUDO ABAIXO É PARTE DA LÓGICA DO JOGO ____________________________
