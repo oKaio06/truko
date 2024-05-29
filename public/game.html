@@ -37,27 +37,42 @@
     <!--        __________________ 1º Pessoa __________________ -->
         <div style="display: flex; justify-content: center;">
             <div id="1pessoa" style="position: absolute; bottom: 5%;">
-                <a href="/jogarcarta" ><img src='images/cartas/C_2.png' alt='' class="c1pessoa1carta"></a>
-                <a href="/jogarcarta"><img src='images/cartas/C_3.png' alt='' class="c1pessoa2carta"></a>
-                <a href="/jogarcarta"><img src='images/cartas/C_4.png' alt='' class="c1pessoa3carta"></a>
+                <a hidden href="/jogarcarta" ><img src='images/cartas/C_2.png' alt='' class="c1pessoa1carta"></a>
+                <a hidden href="/jogarcarta"><img src='images/cartas/C_3.png' alt='' class="c1pessoa2carta"></a>
+                <a hidden href="/jogarcarta"><img src='images/cartas/C_4.png' alt='' class="c1pessoa3carta"></a>
             </div>
         </div>
     <!--        __________________ 2º Pessoa __________________ -->
-        <p style="position: absolute; left: 29.7%;"><img src='images/circulo.png' alt='' id="circulo1" width="150" height="150"></p>
+        <div id="info2">
+            <div>
+                <p id="nome2">Vazio</p>
+                <p><img src='images/circulo.png' alt='' id="circulo2" width="150" height="150"></p>
+            </div>
+        </div>
         <div id="2pessoa" style="position: absolute; left: 26%; top: 40%; transform: rotate(90deg);">
-            <img src='images/cartas/fundocarta.png' alt='' id="2pessoa1carta" class="tamanhoimgcarta2">
+            <img src='images/cartas/C_2.png' alt='' id="2pessoa1carta" class="tamanhoimgcarta2">
             <img src='images/cartas/fundocarta.png' alt='' id="2pessoa2carta" class="tamanhoimgcarta2">
             <img src='images/cartas/fundocarta.png' alt='' id="2pessoa3carta" class="tamanhoimgcarta2">
         </div>
     <!--        __________________ 3º Pessoa __________________ -->
-        <p style="position: absolute; right: 29.7%; bottom: 20%"><img src='images/circulo.png' alt='' id="circulo2" width="150" height="150"></p>
+        <div id="info3">
+            <div>
+                <p><img src='images/circulo.png' alt='' id="circulo3" width="150" height="150"></p>
+                <p id="nome3">Vazio</p>
+            </div>
+        </div>
         <div id="3pessoa" style="position: absolute; right: 26%; top: 40%; transform: rotate(270deg);">
             <img src='images/cartas/fundocarta.png' alt='' id="3pessoa1carta" class="tamanhoimgcarta2">
             <img src='images/cartas/fundocarta.png' alt='' id="3pessoa2carta" class="tamanhoimgcarta2">
             <img src='images/cartas/fundocarta.png' alt='' id="3pessoa3carta" class="tamanhoimgcarta2">
         </div>
     <!--        __________________ 4º Pessoa __________________ -->
-        <p style="position: absolute; right: 35%; top: 4%"><img src='images/circulo.png' alt='' id="circulo3" width="150" height="150"></p>
+        <div id="info4">
+            <div>
+                <p><img src='images/circulo.png' alt='' id="circulo4" width="150" height="150"></p>
+                <p id="nome4">Vazio</p>
+            </div>
+        </div>
         <div id="4pessoa" style="position: absolute; left: 42%; top: 5%; transform: rotate(180deg);">
             <img src='images/cartas/fundocarta.png' alt='' id="4pessoa1carta" class="tamanhoimgcarta2">
             <img src='images/cartas/fundocarta.png' alt='' id="4pessoa2carta" class="tamanhoimgcarta2">
@@ -73,7 +88,7 @@
     <div id='botaotruko' hidden>
         <button class="button truko" style="position: absolute; left: 31%; bottom: 26%">TRUKO</button> <!-- Botão de Truko-->
     </div>
-    <div id="positionbotoes">
+    <div id="positionbotoes" hidden>
         <div id="botoes">
             <button class="button mais">+6</button> <!-- Botão de Mais Truko-->
             <button class="button aceitar">ACEITAR</button> <!-- Botão de Aceitar Truko-->
@@ -84,7 +99,8 @@
 
 <!-- _______________ MENU SELECIONAR TIMES _______________ -->
 <div id="timesbox">
-    <h2>Escolha seu Time!</h2>
+    <h2 id="timer">Aguardando times estarem completos...</h2>
+    <h3>Escolha seu Time!</h3>
     <div id="times">
         <div>
             <p id="time1pessoa1">Vazio</p>
@@ -98,7 +114,7 @@
         </div>
     </div>
 </div>
-
+<!-- _______________ Mensagem de erro _______________ -->
 <div id="errormessagebox">
     <span>ERRO</span>
     <span id="errormsg">Mensagem Importante</span>

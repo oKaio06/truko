@@ -104,8 +104,8 @@ body{
     border-radius: 20px;
 
     position: absolute;
-    top: 2%;
-    left: 27.5%;
+    top: 0.5rem;
+    left: 35rem;
 
     font-family: "Comic Sans MS";
     font-weight: bold;
@@ -121,6 +121,7 @@ body{
 /*___________________________ PARTE DA DIV DE CARTAS ___________________________*/
 
 /*___________________________ PESSOA 1 ___________________________*/
+
 #1pessoa{
     display: flex;
     justify-content: space-around;
@@ -144,10 +145,49 @@ body{
     display: flex;
     justify-content: space-around;
 }
+
+#info2 {
+    position: absolute;
+    top: 8rem;
+    left: 35rem;
+}
+
+#info2 div, #info3 div, #info4 div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center;
+}
+
+#info2 p, #info3 p, #info4 p {
+    display: flex;
+    justify-content: center;
+    margin: 0;
+}
+
+#info2 :nth-child(1), #info3 :nth-child(1), #info4 :nth-child(1) {
+    color: yellow;
+    -webkit-text-stroke: 1px black;
+    font-size: 40px;
+}
+
 /*___________________________ PESSOA 3 ___________________________*/
 #3pessoa{
     display: flex;
     justify-content: space-around;
+}
+
+#info3{
+    position: absolute;
+    right: 35rem;
+    bottom: 11rem;
+}
+
+/*___________________________ PESSOA 3 ___________________________*/
+#info4{
+    position: absolute;
+    right: 41rem;
+    top: 3rem;
 }
 
 /*___________________________ BOTÃO TRUKO ___________________________*/
@@ -234,7 +274,7 @@ body{
     background: linear-gradient(90deg, #FFC0CB 50%, #00FFFF 5%);
 }
 
-#timesbox h2{
+#timesbox h3, h2{
     display: flex;
     justify-content: center;
 }

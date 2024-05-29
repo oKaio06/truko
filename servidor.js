@@ -5,14 +5,14 @@ const io = require('socket.io')(http);
 const colors = require("colors")
 app.use(express.static("./public"));
 http.listen(80);
-console.log("The Dark Night Returns".black)
+console.log("The Dark Night Returns".black);
 
 // ____________________________ Parte do registro de conexões do jogador :D ____________________________
 const jogadores = {};
 const jogadoresPorId = {};
-const jogadoresPorNumero = {} // FUTURO: Alocar isso à lógica do truko, seria para controlar as pessoas de cada time
-const jogadoresconectados = []
-const times = {Time1: {"1": null, "2": null}, Time2: {"1": null, "2": null}}
+const jogadoresPorNumero = {}; // FUTURO: Alocar isso à lógica do truko, seria para controlar as pessoas de cada time
+const jogadoresconectados = [];
+const times = {Time1: {"1": null, "2": null}, Time2: {"1": null, "2": null}};
 const nomestime = [];
 io.on('connection', (socket) => {
 
@@ -20,14 +20,12 @@ io.on('connection', (socket) => {
         const id = socket.id;
         jogadores[nome] = id;
         jogadoresPorId[id] = nome;
-        console.log(`[+] ${nome} se conectou ao TruKo!`)
-        jogadoresConectados("adicionar", nome)
+        jogadoresConectados("adicionar", nome);
     });
 
     socket.on('disconnect', () => {
         const nome = jogadoresPorId[socket.id];
         if (nome) {
-            console.log(`[-] ${nome} se desconectou >:(`);
             jogadoresConectados("remover", nome);
             delete jogadores[nome];
             delete jogadoresPorId[socket.id];
@@ -37,36 +35,39 @@ io.on('connection', (socket) => {
     // Checa se o nome inserido na página do index está dentro da lista de usuários
     socket.on('checarnomes', nome => {
         if (nome in jogadores){
-            socket.emit('receberverificacaonomes', true) // Envia a resposta do checker true pq tem o nome na lista
+            socket.emit('receberverificacaonomes', true); // Envia a resposta do checker true pq tem o nome na lista
         }
         else{
-            socket.emit('receberverificacaonomes', false) // Envia a resposta do checker false pq n tem o nome na lista
+            socket.emit('receberverificacaonomes', false); // Envia a resposta do checker false pq n tem o nome na lista
         }
     });
 
     // Adicionar pessoa no time
     socket.on('entrartime', time => {
-        let id = socket.id
-        let timenum = time[time.length - 1]
+        let id = socket.id;
+        let timenum = time[time.length - 1];
         let nome = jogadoresPorId[id];
-        let checkjogador = checarJogadorInclusoTimes(nome)
+        let checkjogador = checarJogadorInclusoTimes(nome);
         if(checkjogador){
-            socket.emit('mensagemerro', 'Você já está em um time!')
+            socket.emit('mensagemerro', 'Você já está em um time!');
         }
         else{
-            if (times[time]['1'] == null && times[time]['2'] == null){
-                times[time]['1'] = nome
-                nomestime.push([nome, timenum, '1'])
-                io.sockets.emit('selecionarTimetext', nomestime)
+            if (times[time]['1'] == null && times[time]['2'] == null){ // Checa em qual lugar do time vai colocar o jogador
+                times[time]['1'] = nome;
+                nomestime.push([nome, timenum, '1']);
+                io.sockets.emit('selecionarTimetext', nomestime); // Manda para o JS atualizar no HTML os nomes dos jogadores nos times
             }
-            else if(times[time]['2'] == null){
-                times[time]['2'] = nome
-                nomestime.push([nome, timenum, '2'])
-                io.sockets.emit('selecionarTimetext', nomestime)
+            else if(times[time]['2'] == null){ // Checa em qual lugar do time vai colocar o jogador
+                times[time]['2'] = nome;
+                nomestime.push([nome, timenum, '2']);
+                io.sockets.emit('selecionarTimetext', nomestime);
             }
             else{
-                socket.emit('mensagemerro', 'O time que você quer entrar já está cheio!')
+                socket.emit('mensagemerro', 'O time que você quer entrar já está cheio!');
             }
+        }
+        if(nomestime.length == 4){
+            rodarTimerComecar();
         }
     });
 
@@ -81,7 +82,9 @@ io.on('connection', (socket) => {
 // ____________________________ Logar/adicionar/remover jogadores conectados da lista ____________________________
 
 function jogadoresConectados(acao, nome){
+    console.clear();
     if (acao == "remover"){
+        console.log(`[-] ${nome} se desconectou >:(`.red);
         for (let i = jogadoresconectados.length - 1; i >= 0; i--) {
             if (jogadoresconectados[i] === nome) {
                 jogadoresconectados.splice(i, 1);
@@ -90,24 +93,107 @@ function jogadoresConectados(acao, nome){
     }
     else if (acao == "adicionar"){
         jogadoresconectados.push(nome);
+        console.log(`[+] ${nome} se conectou ao TruKo!`.green);
     }
-    console.log(`[INFO] Jogadores conectados: ${jogadoresconectados} `);
+    console.log(`[INFO] Jogadores conectados: ${jogadoresconectados} \n`.blue);
 }
 
-// ____________________________ BIBLIOTECA PARA ATUALIZAR COISAS DO JOGO ____________________________
+// ____________________________ BIBLIOTECA DE FUNÇÕES DO SERVIDOR  ____________________________
 
-function updateImg(evento, elemento, id){
-    socket.emit('updateImg', evento, elemento, id)
-}
-
+// Checa se o jogador que está tentando entrar no time já está em algum time
 function checarJogadorInclusoTimes(nome){
     for (let i = 0; i < 3; i++){
         if (nome == times["Time1"][`${i}`] || nome == times["Time2"][`${i}`]){
-            return true
+            return true;
         }
     }
-    return false
+    return false;
 }
+
+function rodarTimerComecar(){ // TODO: Fazer com que se um jogador sair o timer cancela
+    let temporestante = 5;
+    const Intervalo = setInterval(() => {
+        io.sockets.emit('timerinicio', temporestante);
+        temporestante--;
+
+        if (temporestante < 0) { // Quando o tempo é menor que 0 ele para o timer e inicia a função que starta o jogo
+            clearInterval(Intervalo);
+            posicaoJogadoresUI()
+            gameStart()
+        }
+    }, 1000);
+}
+
+function posicaoJogadoresUI(){
+    const jogadoresnostimes = [
+        times['Time1']['1'],
+        times['Time1']['2'],
+        times['Time2']['1'],
+        times['Time2']['2']
+    ]
+    const jogadoresID = [
+        jogadores[times['Time1']['1']],
+        jogadores[times['Time1']['2']],
+        jogadores[times['Time2']['1']],
+        jogadores[times['Time2']['2']]
+    ]
+    const posicaojogadores = [
+        [jogadoresnostimes[2], jogadoresnostimes[1], jogadoresnostimes[3]], // Time1Pos1
+        [jogadoresnostimes[3], jogadoresnostimes[0], jogadoresnostimes[2]], // Time1Pos2
+        [jogadoresnostimes[0], jogadoresnostimes[3], jogadoresnostimes[1]], // Time2Pos1
+        [jogadoresnostimes[1], jogadoresnostimes[2], jogadoresnostimes[0]]  // Time2Pos2
+    ];
+    for(let i = 0; i < 4; i++){
+        io.to(jogadoresID[i]).emit('carregarpessoas', posicaojogadores[i]); // Carrega o nome das pessoas dentro do html nas devidas posições
+    }
+
+// ______________________ Explicação abaixo ______________________:
+
+// Posições de visão para cada jogador dentro do jogo, pq para cada pessoa a perspectiva deve ser diferente
+//     Time1Pos1
+//     1 pessoa: Time1Pos1 (1)
+//     2 pessoa: Time2Pos1 (3)
+//     3 pessoa: Time1Pos2 (2)
+//     4 pessoa: Time2Pos2 (4)
+//
+//     Time1Pos2
+//     1 pessoa: Time1Pos2
+//     2 pessoa: Time2Pos2
+//     3 pessoa: Time1Pos1
+//     4 pessoa: Time2Pos1
+//
+//     Time2Pos1
+//     1 pessoa: Time2Pos1
+//     2 pessoa: Time1Pos1
+//     3 pessoa: Time2Pos2
+//     4 pessoa: Time1Pos2
+//
+//     Time2Pos2
+//     1 pessoa: Time2Pos2
+//     2 pessoa: Time1Pos2
+//     3 pessoa: Time2Pos1
+//     4 pessoa: Time1Pos1
+}
+
+// Executa ações para todos os jogadores (Pode usar para um time só)
+// for(let i = 1; i < 3; i++){
+//     let time = `Time${i}`
+//     for(let j = 1; j < 3; j++){
+//         let posicao = `${j}`
+//         io.sockets.emit('alterarvisibilidade', 'timesbox');
+//         io.sockets.emit('alterarvisibilidade', 'assetsjogo');
+//     }
+// }
+
+
+
+
+
+
+
+
+
+
 
 // ____________________________ TUDO ABAIXO É PARTE DA LÓGICA DO JOGO ____________________________
 // ____________________________ TUDO ABAIXO É PARTE DA LÓGICA DO JOGO ____________________________
@@ -123,17 +209,15 @@ let nomejogadores = []
 
 // ____________________________FUNÇÕES MAIN DO JOGO____________________________
 
-pontosmao = {time1: 0, time2: 0};
-pontosrodada = {time1: 0, time2: 0};
+let pontosmao = {Time1: 0, Time2: 0};
+let pontosrodada = {Time1: 0, Time2: 0};
 let vira;
 function gameStart(){
-    let time1 = [jogadores[0], jogadores[2]];
-    let time2 = [jogadores[1], jogadores[3]];
-
-    //Mandar os jogadores para a visão do site pelo WebSocket
+    io.sockets.emit('alterarvisibilidade', 'timesbox');
+    io.sockets.emit('alterarvisibilidade', 'assetsjogo');
     //Definir posição jogadores -> WebSocket
 
-    mao(0)
+    // mao(0)
 }
 function mao(pontospartida){ // Uma mão é basicamente o ponto final do jogo, aquele que fizer 12 pontos ganha uma mão, pode valer 1,3,6,9,12
     if (pontosrodada.time1 == 2) {
@@ -277,7 +361,6 @@ function checkmaiorCarta(cartascheck, manilhacheck){
     let maiorcarta;
     let maiorcartaposicao;
     let timevencedor;
-    // noinspection JSUnusedAssignment
 
     // Checar o mais valor da carta
     for (let i = 0; i < 4; i++) {
