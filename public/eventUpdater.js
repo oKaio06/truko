@@ -32,32 +32,50 @@ document.addEventListener("DOMContentLoaded", () => {
     //Alterar time de pessoa
     socket.on('selecionarTimetext', (nomes) => {
         for(let i = 0; i < nomes.length; i++){
-            let nome = nomes[i][0]
-            let time = nomes[i][1]
-            let posicao = nomes[i][2]
-            let id = `time${time}pessoa${posicao}`
-            document.getElementById(id).innerHTML = `${nome}`
+            let nome = nomes[i][0];
+            let time = nomes[i][1];
+            let posicao = nomes[i][2];
+            let id = `time${time}pessoa${posicao}`;
+            document.getElementById(id).innerHTML = `${nome}`;
         }
-    })
+    });
     // Mostra mensagem de erro para usuário
     socket.on('mensagemerro', mensagem => {
-        errorText(mensagem)
-    })
+        return errorText(mensagem);
+    });
 
     // Mostra o contador para todos os usuários
     socket.on('timerinicio', temporestante => {
-        atualizarTimer(temporestante)
-    })
+        return atualizarTimer(temporestante);
+    });
 
     // Altera a visibilidade dos elementos dentro do HTML
     socket.on('alterarvisibilidade', id => {
-        alterarVisibilidade(id)
-    })
+        return alterarVisibilidade(id);
+    });
 
     // Carrega os nomes das pessoas no momento
     socket.on('carregarpessoas', posicoes => {
-        carregarPessoas(posicoes)
-        console.log('jogadores carregados')
+        return carregarPessoas(posicoes);
+    });
+
+    // Mostra as cartas das pessoas no HTML
+    socket.on('carregarcartas', cartas => {
+        return carregarCartas(cartas);
+    });
+
+    // Carrega imagens no HTML, cartas ou genéricas
+    socket.on('carregarimagem', (id, imagemparacarregar) => {
+        return carregarImagem(id, imagemparacarregar);
+    });
+
+    // Mostra a barra de tempo para o jogador1
+    socket.on('carregarbarradetempo', jogadorturno => {
+        return updateTimeBar(jogadorturno);
+    });
+
+    socket.on('atualizartexto', (id, texto) => {
+        return updateTexto(id, texto);
     })
 
 });
@@ -89,10 +107,10 @@ function errorText(mensagem){
 
 function atualizarTimer(temporestante){
     let timer = document.getElementById('timer');
-    timer.innerHTML = `O jogo irá iniciar em ${temporestante} segundos...`
+    timer.innerHTML = `O jogo irá iniciar em ${temporestante} segundos...`;
 }
 
-function alterarVisibilidade(id){
+function alterarVisibilidade(id){ //
     let elemento = document.getElementById(id);
     elemento.hidden = !elemento.hidden;
     // Se estiver hidden fica não hidden, se estiver não hidden fica hidden
@@ -100,11 +118,10 @@ function alterarVisibilidade(id){
 
 function carregarPessoas(pos) {
     for (let i = 0; i < 3; i++) {
-        console.log(i+2, pos[i])
-        document.getElementById(`nome${i + 2}`).innerHTML = pos[i]
+        document.getElementById(`nome${i + 2}`).innerHTML = pos[i];
     }
 }
-    //     Time1Pos1
+//     Time1Pos1
 //     1 pessoa: Time1Pos1 (1)
 //     2 pessoa: Time2Pos1 (3)
 //     3 pessoa: Time1Pos2 (2)
@@ -127,3 +144,80 @@ function carregarPessoas(pos) {
 //     2 pessoa: Time1Pos2
 //     3 pessoa: Time2Pos1
 //     4 pessoa: Time1Pos1
+
+function carregarCartas(cartas){
+    for (let i = 0; i < 3; i++){
+        document.getElementById(`c1pessoa${i + 1}carta`).src = `images/cartas/${cartas[i][0]}_${cartas[i][1]}.png`;
+    }
+}
+
+function carregarImagem(id, imagem){
+    console.log(`id familioa ${id}, imageom ${imagem}`)
+    document.getElementById(id).src = imagem;
+}
+
+let repetido = false; // Variável global para controlar repetição
+
+let intervalId;
+
+function updateTimeBar(jogadoratual) {
+    let repetido = false;
+    let elem = document.getElementById("barrinha");
+    let demo = document.getElementById("temporestantejogada");
+    let jogadorturno = document.getElementById('turnojogadortempo');
+
+    if (intervalId) {
+        clearInterval(intervalId);  // Clear the existing interval
+    }
+
+    if (jogadoratual == 'parartimer') {
+        let width = 100;
+        let tempo = 1100;
+        jogadorturno.innerHTML = `Turno de ------`;
+        elem.style.width = 100 + '%';
+        demo.innerHTML = '--';
+        repetido = true;
+    }
+    else {
+        let width = 100;
+        let tempo = 1100;
+        jogadorturno.innerHTML = `Turno de ${jogadoratual}`;
+        if (jogadoratual == 'truko'){
+            jogadorturno.innerHTML = `${jogadoratual} pediu Truko!`;
+            tempo = 1600;
+        }
+
+        intervalId = setInterval(frame, 10);
+
+        function frame() {
+            if (tempo <= 0 || repetido) {
+                clearInterval(intervalId);
+            } else {
+                width -= 0.1;
+                tempo--;
+                elem.style.width = width + '%';
+                demo.innerHTML = `${parseInt(tempo / 100)}`;
+            }
+        }
+    }
+}
+
+function selecionarCarta(carta){
+    let cartaselecionada = document.getElementById(`c1pessoa${carta}carta`).src;
+    // Sei que é gigante, mas isso retorna o valor da carta, tipo C_2
+    let valorcarta = cartaselecionada.slice
+    (cartaselecionada.length - 7,cartaselecionada.length).slice(0,3);
+    socket.emit('recebercartajogada', `c1pessoa${carta}carta`, valorcarta);
+}
+
+function botaoTruko(){
+    socket.emit('botaotruko');
+}
+
+function updateTexto(id, texto) {
+    document.getElementById(id).innerHTML = texto;
+}
+
+function trukoHandler(action) {
+    socket.emit('trukohandler', action);
+}
