@@ -120,11 +120,69 @@ body{
 
 /*___________________________ PARTE DA DIV DE CARTAS ___________________________*/
 
+/*___________________________ VIRA E BARALHO ___________________________*/
+.vira, .baralho{
+    width: 90px;
+    height: 134px;
+    border: gray 2px solid;
+    border-radius: 10px;
+}
+.vira{
+    position: absolute;
+    top: 25rem;
+    left: 54rem;
+    transform: rotate(-20deg);
+}
+.baralho{
+    position: absolute;
+    top: 23rem;
+    right: 54rem;
+    box-shadow: 7px 7px 5px black;
+}
+
+#temporestantejogada, #turnojogadortempo{
+    display: flex;
+    justify-content: center;
+    font-weight: bolder;
+    font-size: 20px;
+    margin: 0;
+
+}
+
+#temporestantejogada{
+    position: absolute;
+    left: 6rem;
+    height: 10px;
+    bottom: 17px;
+}
+#turnojogadortempo{
+    color: yellow;
+    font-size: 25px;
+}
+/*___________________________ ANIMAÇÃO SIMPLES DE QUANDO PASA O MOUSE POR CIMA DA CARTA ELA FICA PARA CIMA ___________________________*/
+.c1pessoa1carta:hover{
+    border: goldenrod 5px solid;
+    bottom: 6%;
+}
+.c1pessoa2carta:hover{
+    border: goldenrod 5px solid;
+    bottom: 6%;
+}
+.c1pessoa3carta:hover{
+    border: goldenrod 5px solid;
+    bottom: 6%;
+}
+
 /*___________________________ PESSOA 1 ___________________________*/
 
 #1pessoa{
+    position: absolute;
+    bottom: 5%;
     display: flex;
     justify-content: space-around;
+    width: 400px;
+    height: 200px;
+    align-items: center;
 }
 
 #background{
@@ -138,6 +196,8 @@ body{
     height: 179px;
     border: gray 2px solid;
     border-radius: 10px;
+    transition-duration: 0.1s;
+    align-content: end;
 }
 
 /*___________________________ PESSOA 2 ___________________________*/
@@ -197,7 +257,6 @@ body{
     text-decoration: none;
     display: inline-block;
     transition-duration: 0.4s;
-    cursor: pointer;
 }
 
 .truko {
