@@ -625,5 +625,5 @@ function trukoHandler(action){
 
 // ____________________________FAZ AS AÇÕES DE QUEM VENCEU O JOGO____________________________
 function timeVencedor(time){
-
+    // fazer a lógica de o que acontece quando algum time vence o jogo
 }
