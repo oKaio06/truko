@@ -76,8 +76,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     socket.on('atualizartexto', (id, texto) => {
         return updateTexto(id, texto);
-    })
+    });
+    socket.on('removerhidden', (id) => {
+        return removerHidden(id);
+    });
 
+    socket.on('pedirtruko', (acao, jogador) => {
+        return updateTrukoBar(acao, jogador);
+    });
 });
 
 
@@ -152,11 +158,8 @@ function carregarCartas(cartas){
 }
 
 function carregarImagem(id, imagem){
-    console.log(`id familioa ${id}, imageom ${imagem}`)
     document.getElementById(id).src = imagem;
 }
-
-let repetido = false; // Variável global para controlar repetição
 
 let intervalId;
 
@@ -178,6 +181,7 @@ function updateTimeBar(jogadoratual) {
         demo.innerHTML = '--';
         repetido = true;
     }
+
     else {
         let width = 100;
         let tempo = 1100;
@@ -192,11 +196,47 @@ function updateTimeBar(jogadoratual) {
         function frame() {
             if (tempo <= 0 || repetido) {
                 clearInterval(intervalId);
+
             } else {
                 width -= 0.1;
                 tempo--;
                 elem.style.width = width + '%';
                 demo.innerHTML = `${parseInt(tempo / 100)}`;
+            }
+        }
+    }
+}
+
+function updateTrukoBar(acao, jogadoratual) {
+    let repetido = false;
+    let elem = document.getElementById("barrinha");
+    let demo = document.getElementById("temporestantejogada");
+    let jogadorturno = document.getElementById('turnojogadortempo');
+
+    if (intervalId) {
+        clearInterval(intervalId);  // Clear the existing interval
+    }
+
+    if (acao == 'parartimer') {
+        jogadorturno.innerHTML = `Turno de ------`;
+        elem.style.width = 100 + '%';
+        demo.innerHTML = '--';
+        repetido = true;
+    } else {
+        let width = 100;
+        let tempo = 1500;
+        jogadorturno.innerHTML = `${jogadoratual} pediu Truko!`;
+
+        intervalId = setInterval(frame, 10);  // Change the interval to 100ms
+
+        function frame() {
+            if (tempo <= 0 || repetido) {
+                clearInterval(intervalId);
+            } else {
+                width -= 0.0667;  // Decrement the width by 1%
+                tempo--;
+                elem.style.width = width + '%';
+                demo.innerHTML = `${parseInt(tempo / 100)}`;  // Update the demo element to show the remaining time in seconds
             }
         }
     }
@@ -220,4 +260,9 @@ function updateTexto(id, texto) {
 
 function trukoHandler(action) {
     socket.emit('trukohandler', action);
+}
+
+function removerHidden(id){
+    let elemento = document.getElementById(id);
+    elemento.removeAttribute('hidden');
 }

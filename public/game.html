@@ -32,6 +32,12 @@
             <img src='images/circulo.png' alt='' width="25" height="25" id="outrotime3">
             <p id="outrotimepontos">0</p>
         </div>
+        <div id="pontosrodada">
+            <div>
+                <p>Valor da rodada: </p>
+                <p id="valorpontosrodada">1</p>
+            </div>
+        </div>
     </div>
     <div id='cartas'>
     <!--        __________________ 1º Pessoa __________________ -->
@@ -50,41 +56,47 @@
             </div>
         </div>
         <div id="2pessoa" style="position: absolute; left: 26%; top: 40%; transform: rotate(90deg);">
-            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2">
-            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2">
-            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2">
+            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2" id="c2pessoa1carta">
+            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2" id="c2pessoa2carta">
+            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2" id="c2pessoa3carta">
         </div>
     <!--        __________________ 3º Pessoa __________________ -->
         <div id="info3">
             <div>
                 <p><img src='images/circulo.png' alt='' id="circulo3" width="150" height="150"></p>
-                <p id="nome3">Vazio</p>
+                <p id="nome3">pessoa 3</p>
             </div>
         </div>
         <div id="3pessoa" style="position: absolute; right: 26%; top: 40%; transform: rotate(270deg);">
-            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2">
-            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2">
-            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2">
+            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2" id="c3pessoa1carta">
+            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2" id="c3pessoa2carta">
+            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2" id="c3pessoa3carta">
         </div>
     <!--        __________________ 4º Pessoa __________________ -->
         <div id="info4">
             <div>
                 <p><img src='images/circulo.png' alt='' id="circulo4" width="150" height="150"></p>
-                <p id="nome4">Vazio</p>
+                <p id="nome4">pessoa 4</p>
             </div>
         </div>
         <div id="4pessoa" style="position: absolute; left: 42%; top: 5%; transform: rotate(180deg);">
-            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2">
-            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2">
-            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2">
+            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2" id="c4pessoa1carta">
+            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2" id="c4pessoa2carta">
+            <img src='images/cartas/fundocarta.png' alt='' class="tamanhoimgcarta2" id="c4pessoa3carta">
         </div>
+    </div>
+    <div id="cartasjogadas">
+        <img src="images/cartas/fundocarta.png" alt="bugado" id="cartajogadapessoa1" class="cartajogadapessoa1" hidden>
+        <img src="images/cartas/fundocarta.png" alt="bugado" id="cartajogadapessoa2" class="cartajogadapessoa2" hidden>
+        <img src="images/cartas/fundocarta.png" alt="bugado" id="cartajogadapessoa3" class="cartajogadapessoa3" hidden>
+        <img src="images/cartas/fundocarta.png" alt="bugado" id="cartajogadapessoa4" class="cartajogadapessoa4" hidden>
     </div>
     <div id='tabuleiro'>
         <!--        __________________ Tabuleiro __________________ -->
         <img src='images/cartas/fundocarta.png' alt='' class="vira" id="vira"> <!-- Carta que vira para definir a manilha -->
         <img src='images/cartas/fundocarta.png' alt='' class="baralho"> <!-- O deck de baralho que fica do ladinho -->
         <!--            Barra de tempo do jogador-->
-        <div style="position: absolute; bottom: 30%; left: 36rem;">
+        <div style="position: absolute; bottom: 19.5rem; left: 36rem;">
             <p id="turnojogadortempo">Turno de  Vazio</p>
             <p id="temporestantejogada">Tempo</p>
             <div style="border: black 5px solid; background-color: gray; height: 20px; width: 200px;">
@@ -98,10 +110,14 @@
     </div>
     <div id="positionbotoes" hidden>
         <div id="botoes">
-            <button class="button mais" onclick="trukoHandler('+')">+6</button> <!-- Botão de Mais Truko-->
+            <button class="button mais" onclick="trukoHandler('+')">+3</button> <!-- Botão de Mais Truko-->
             <button class="button aceitar" onclick="trukoHandler('aceitar')">ACEITAR</button> <!-- Botão de Aceitar Truko-->
             <button class="button correr" onclick="trukoHandler('correr')">CORRER</button> <!-- Botão de Correr Truko-->
         </div>
+    </div>
+    <div id="repostatruko" hidden>
+        <p id="respostajogador1" hidden>Aguardando Jogador...</p>
+        <p id="respostajogador2" hidden>Aguardando Jogador...</p>
     </div>
 </section>
 
