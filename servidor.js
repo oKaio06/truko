@@ -437,7 +437,7 @@ async function turno() {
     if (!(carta == 'Truko')) {
         return carta
     }
-
+    // TODO PROBLEMA AQUI!!!
     let respostaTruko = trukoAcoes()
 
     console.log(respostaTruko)
@@ -697,7 +697,7 @@ function atualizarScoreboardPontos(timevencedor, timeperdedor){
 }
 
 
-//____________________________GERENCIA AÇÕES AO APERTAR TRUKO____________________________ TODO PROBLEM ESTÁ AQUI!!!!!
+//____________________________GERENCIA AÇÕES AO APERTAR TRUKO____________________________ TODO PROBLEMA AQUI
 function trukoAcoes() {
 
    eventStatusHandler = 'trukoOpcoes';
@@ -717,7 +717,7 @@ function trukoAcoes() {
 }
 
 
-// Aguarda os jogadores selecionarem aceitar ou correr ou somar
+// Aguarda os jogadores selecionarem aceitar ou correr ou somar // TODO TALVEZ ESTEJA COM PROBLEMA?
 function trukoWaiter(){
     let tempoesgotado = false;
     return new Promise((promessa) => {
