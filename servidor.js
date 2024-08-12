@@ -3,6 +3,7 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const colors = require("colors")
+const {query} = require("express");
 app.use(express.static("./public"));
 http.listen(80);
 console.log("The Dark Night Returns".black);
@@ -10,32 +11,37 @@ console.log("The Dark Night Returns".black);
 // ____________________________ Parte do registro de conexões do jogador :D ____________________________
 const jogadores = {};
 const jogadoresPorId = {};
-const jogadoresPorNumero = {}; // FUTURO: Alocar isso à lógica do truko, seria para controlar as pessoas de cada time
 const jogadoresconectados = [];
 const times = {Time1: {"1": null, "2": null}, Time2: {"1": null, "2": null}};
 const nomestime = [];
 let playerjogoucarta = false;
 let cartajogada;
 let valorpontosrodada = 1;
-let gerenciadorTruko;
 let timetrukado;
 let socketjogadoratual;
+let nomejogadorestime;
+let jogadoresID;
+let jogadoresQueResponderamAoTruko = [];
+let trukoaceito = false;
+let eventStatusHandler = "selecionarTimes";
+let trukopressionado
 
 io.on('connection', (socket) => {
-
+    // Registra o nome em na variável jogadores e o socket id no jogadoresPorId e retorna para jogadoresConectados
     socket.on('registrarnomes', nome => {
         const id = socket.id;
         jogadores[nome] = id;
         jogadoresPorId[id] = nome;
-        jogadoresConectados("adicionar", nome);
+        return jogadoresConectados("adicionar", nome);
     });
 
+    // Remove o nome jogador da variável jogadores e o socket id no jogadoresPorId e retorna para jogadoresConectados
     socket.on('disconnect', () => {
         const nome = jogadoresPorId[socket.id];
         if (nome) {
-            jogadoresConectados("remover", nome);
             delete jogadores[nome];
             delete jogadoresPorId[socket.id];
+            return jogadoresConectados("remover", nome);
         }
     });
 
@@ -43,20 +49,23 @@ io.on('connection', (socket) => {
     socket.on('checarnomes', nome => {
         if (nome in jogadores){
             socket.emit('receberverificacaonomes', true); // Envia a resposta do checker true pq tem o nome na lista
+            return;
         }
-        else{
-            socket.emit('receberverificacaonomes', false); // Envia a resposta do checker false pq n tem o nome na lista
-        }
+        socket.emit('receberverificacaonomes', false); // Envia a resposta do checker false pq n tem o nome na lista
     });
 
     // Adicionar pessoa no time
     socket.on('entrartime', time => {
+        // Autorizador de eventos, se for negado o pedido nada acontecerá.
+        if ( !autorizarEvento(socket.id, 'selecionarTimes') ){return;}
+
         let id = socket.id;
         let timenum = time[time.length - 1];
         let nome = jogadoresPorId[id];
         let checkjogador = checarJogadorInclusoTimes(nome);
         if(checkjogador){
             socket.emit('mensagemerro', 'Você já está em um time!');
+            return;
         }
         else{
             if (times[time]['1'] == null && times[time]['2'] == null){ // Checa em qual lugar do time vai colocar o jogador
@@ -71,6 +80,7 @@ io.on('connection', (socket) => {
             }
             else{
                 socket.emit('mensagemerro', 'O time que você quer entrar já está cheio!');
+                return;
             }
         }
         if(nomestime.length == 4){
@@ -80,47 +90,105 @@ io.on('connection', (socket) => {
 
     // Recebe a carta jogada e faz o processamento da carta (todas as ações e o que fazer com ela)
     socket.on('recebercartajogada', (id, carta) => {
-        if(socket.id == socketjogadoratual){ // Checa se o jogador é o jogador do turno mesmo ou se é outro jogador
-            cartajogada = [carta[0], carta[2]]; // Formata a carta jogada em [naipe, carta]
-            cartaSelecionada = cartajogada;
-            if (cartajogada.length >= 2) { // Checar se é uma carta válida
-                playerjogoucarta = true;
-                console.log(`Carta jogada pelo jogador com ID: ${socket.id}, carta:`, cartaSelecionada);
-            }
-        }
-        else{
-            console.log(`O jogador `, `${jogadoresPorId[socket.id]}`.blue, `,com id `, `${socket.id}`.blue, `tentou jogar uma carta mesmo não sendo o turno dele :(...`);
-        }
+        // Autorizador de eventos, se for negado o pedido nada acontecerá.
+
+        cartajogada = [carta[0], carta[2]]; // Formata a carta jogada em [naipe, carta]
+        if (!autorizarEvento(socket.id, 'jogarcarta')){return;}
+        let numpessoa = acharNumPessoa(jogadoresPorId[socket.id])
+
+        cartaSelecionada = cartajogada;
+        playerjogoucarta = true;
+        console.log(`Carta jogada pelo jogador com ID: ${socket.id}, carta:`, cartaSelecionada);
     });
+
+    // Gerenciar o click no botão de TRUKO
     socket.on('botaotruko', () => {
-        console.log(`Botao de truko pressionado por: ${socket.id}, jogador: ${jogadoresPorId[socket.id]}`);
-        for(let i = 0; i < 4; i++){
-            if(nomejogadorestime[i] == jogadoresPorId[socket.id]){
-                // 0, 2 == time1
-                // 1, 3 == time2
-                timetrukado = i % 2 == 0? "Time1" : "Time2";
-            }
-        }
-        io.to(socketjogadoratual).emit('alterarvisibilidade', 'botaotruko');
+        // Autorizador de eventos, se for negado o pedido nada acontecerá.
+        if ( !autorizarEvento(socket.id, 'truko') ){return;}
+
+        let jogador = jogadoresPorId[socket.id]
+        timetrukado = (times["Time1"]["1"] === jogador || times["Time1"]["2"] === jogador) ? "Time2" : "Time1";
+        console.log(`Botao de truko pressionado por: ${socket.id}, jogador: ${jogador}`);
+        console.log(`time trukado: ${timetrukado}, membros do time trukado: ${times[timetrukado]["1"]}, ${times[timetrukado]["2"]}`);
+
+        io.to(socketjogadoratual).emit('alterarvisibilidade', 'botaotruko'); // Remove o botão truko do ui
+        // Mostra as opções para truko e carrega a barra de tempo para o truko
+        io.sockets.emit('alterarvisibilidade', 'repostatruko');
+        io.sockets.emit('pedirtruko', 'truko', jogador);
+        // Carregar botões de aceitar correr +6 pros trukados
         io.to(jogadores[times[timetrukado]["1"]]).emit('alterarvisibilidade', 'positionbotoes');
         io.to(jogadores[times[timetrukado]["2"]]).emit('alterarvisibilidade', 'positionbotoes');
+
+        jogadoresQueResponderamAoTruko = [] // Reseta essa variável para os próximos trukos
+        trukopressionado = true
+
     });
-    socket.on('trukohandler', (action) => {
-        // Controla as ações que os botões de truko fazem
-        if(action == '+'){
-            trukoHandler('soma')
-        }
-        else if(action == 'aceitar'){
-            trukoHandler('aceitar')
-        }
-        else if(action == 'correr') {
-            trukoHandler('aceitar')
+
+    // Gerencia as ações do Truko do time trukado
+    socket.on('trukohandler', (action) => { // Controla as ações que os botões de truko fazem
+
+        // Autorizador de eventos, se for negado o pedido nada acontecerá.
+        if ( !autorizarEvento(socket.id, 'trukoOpcoes', ['Executando a ação:'.blue, `${action}`.green] )){return;}
+
+        let nomeJogador = jogadoresPorId[socket.id];
+        console.log(!(jogadoresQueResponderamAoTruko.includes(nomeJogador)))
+        if(!(jogadoresQueResponderamAoTruko.includes(nomeJogador))) { // Checa se o mesmo jogador que clicou já deu uma resposta
+
+            jogadoresQueResponderamAoTruko.push(nomeJogador);
+            io.to(socket.id).emit('alterarvisibilidade', 'positionbotoes');
+
+            action = action == "+" ? "soma" : action;
+            let posicao = times['Time1']['1'] == nomeJogador ? '1' : '2';
+            io.sockets.emit('alterarvisibilidade', `respostajogador${posicao}`);
+            io.sockets.emit('atualizartexto', `respostajogador${posicao}`, `${jogadoresPorId[socket.id]} ${action == "soma" ? "Somou!" : (action == "aceitar" ? "Aceitou!" : (action == "correr" ? "Correu!" : "ERRO"))}`);
+
+            console.log(`jogador que clicou na acao do truko: ${nomeJogador} ${socket.id}, ação: ${action}`)
+
+            return trukoActionHandler(action);
         }
     })
 });
 
-// ____________________________ Logar/adicionar/remover jogadores conectados da lista ____________________________
+// Autoriza os eventos e garante que ninguém tente bancar uma de engraçadinho na partida
+function autorizarEvento(id, eventoExecutado, extra= ["Sem informações extra"]){
+    // Caso especial para o evento de trukoOpcoes, já que são dois jogadores que tem que ser verificados e eles não são iguais ao jogador do turno atual
+    if (eventoExecutado == 'trukoOpcoes' && eventStatusHandler != 'selecionarTimes'){
+        return jogadoresPorId[id] == times[timetrukado]['1'] || jogadoresPorId[id] == times[timetrukado]['2'];
+    }
+    else if (eventStatusHandler == 'jogarcarta' && eventoExecutado == 'truko'){
+        return true
+    }
+    // Checa se o evento tentando ser executado é o mesmo que está ocorrendo e se o id do jogador é o mesmo do jogador da rodada atual
+    else if (eventStatusHandler != eventoExecutado || id != socketjogadoratual) {
+        if (eventoExecutado == "selecionarTimes"){return  true;}
+        else{
+            console.log(
+                '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'.red.bold, 'TRUKO'.yellow.bold, 'SECURITY'.red.bold, '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- \n'.red.bold,
+                'Evento recebido pelo client bloqueado!'.red.bold, `Evento:`.blue, `${eventoExecutado}`.green, `Jogador:`.blue, `${jogadoresPorId[id]}\n`.green,
+                'Checkers do evento recebido:'.red.bold, 'EventCheck:'.blue, `${(eventStatusHandler != eventoExecutado) ? "BLOQUEADO" : "AUTORIZADO"}`.green, 'PlayerCheck'.blue, `${(id != socketjogadoratual) ? "BLOQUEADO" : "AUTORIZADO"}\n`.green,
+                'Informações extras:'.red.bold, `${extra.join(' ')} \n`,
+                '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- \n'.red.bold);
+            return false;
+        }
+    }
+    else if (eventStatusHandler == 'jogarcarta'){
+        let numpessoa = acharNumPessoa(jogadoresPorId[id])
+        let cartasdojogador = eval(`cartaspessoa${numpessoa}`)
+        // Resumidamente checa se a carta que o jogador jogou está nas cartas dele
+        if (!cartasdojogador.some(carta => JSON.stringify(carta) === JSON.stringify(cartajogada))){
+            console.log(
+                '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'.red.bold, 'TRUKO'.yellow.bold, 'SECURITY'.red.bold, '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- \n'.red.bold,
+                'Tentativa de CartaInjection detectada e bloqueada!'.red.bold, `Evento:`.blue, `jogarcarta`.green, `Jogador:`.blue, `${jogadoresPorId[id]}\n`.green,
+                'Carta que ele tentou jogar: '.blue, `${cartajogada}\n`.green,
+                '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- \n'.red.bold);
+            io.sockets.emit('mensagemerro', `O jogador ${jogadoresPorId[id]} tentou trapacear... ;(`)
+            return false;
+        }
+    }
+    return true
+}
 
+// ____________________________ Logar/adicionar/remover jogadores conectados da lista ____________________________
 function jogadoresConectados(acao, nome){
     if (acao == "remover"){
         console.log(`[-] ${nome} se desconectou >:(`.red);
@@ -157,33 +225,17 @@ function rodarTimerComecar(){ // TODO: Fazer com que se um jogador sair o timer 
 
         if (temporestante < 0) { // Quando o tempo é menor que 0 ele para o timer e inicia a função que starta o jogo
             clearInterval(Intervalo);
-            gameStart()
+            gameStart().then(r => {
+                print("Jogo finalizado")
+            })
         }
     }, 1000);
 }
 
-function posicaoJogadoresUI() {
+function posicaoJogadoresUI(posicaojogadores) {
     // Esconde a div de times com todos os elementos + faz aparecer os assets do jogo
     io.sockets.emit('alterarvisibilidade', 'timesbox');
     io.sockets.emit('alterarvisibilidade', 'assetsjogo');
-    const nomejogadorestime = [
-        times['Time1']['1'],
-        times['Time1']['2'],
-        times['Time2']['1'],
-        times['Time2']['2']
-    ]
-    const jogadoresID = [
-        jogadores[times['Time1']['1']],
-        jogadores[times['Time1']['2']],
-        jogadores[times['Time2']['1']],
-        jogadores[times['Time2']['2']]
-    ]
-    const posicaojogadores = [
-        [nomejogadorestime[2], nomejogadorestime[1], nomejogadorestime[3]], // Time1Pos1
-        [nomejogadorestime[3], nomejogadorestime[0], nomejogadorestime[2]], // Time1Pos2
-        [nomejogadorestime[0], nomejogadorestime[3], nomejogadorestime[1]], // Time2Pos1
-        [nomejogadorestime[1], nomejogadorestime[2], nomejogadorestime[0]]  // Time2Pos2
-    ];
     for (let i = 0; i < 4; i++) {
         io.to(jogadoresID[i]).emit('carregarpessoas', posicaojogadores[i]); // Carrega o nome das pessoas dentro do html nas devidas posições
     }
@@ -234,19 +286,23 @@ function carregarUmaImagemParaTodos(tipo, id, imagem){
 let pontosmao;
 let pontosrodada;
 let primeiroturno = true
-let nomejogadorestime;
 
 let cartaSelecionada = undefined;
 let cartaspessoa1;
 let cartaspessoa2;
 let cartaspessoa3;
 let cartaspessoa4;
-let pontospartida;
 let listajogadoresturno;
 let cartasrodada = [];
 let vira;
 let pontoparatimequejogoucarta = [];
-let rodadanum;
+let rodadanum = 0;
+let cartassalvaspessoas;
+let jogadorescorrendo = 0
+
+// Controle dos intervalos de verificação e timers
+let intervaloVerificacao;
+let temporestante;
 
 function gameStart() {
 
@@ -259,8 +315,20 @@ function gameStart() {
         times['Time2']['1'],
         times['Time2']['2']
     ];
+    jogadoresID = [
+        jogadores[times['Time1']['1']],
+        jogadores[times['Time1']['2']],
+        jogadores[times['Time2']['1']],
+        jogadores[times['Time2']['2']]
+    ];
+    let posicaojogadores = [                                       // Visão de:
+        [nomejogadorestime[2], nomejogadorestime[1], nomejogadorestime[3]], // Time1Pos1
+        [nomejogadorestime[3], nomejogadorestime[0], nomejogadorestime[2]], // Time1Pos2
+        [nomejogadorestime[0], nomejogadorestime[3], nomejogadorestime[1]], // Time2Pos1
+        [nomejogadorestime[1], nomejogadorestime[2], nomejogadorestime[0]]  // Time2Pos2
+    ];
 
-    posicaoJogadoresUI() //  Deixa a parte dos times invisível, coloca os assets do jogo visível
+    posicaoJogadoresUI(posicaojogadores) //  Deixa a parte dos times invisível, coloca os assets do jogo visível
     // e ajusta a posição de todos os jogadores com as respectivas perspectivas
 
     return mao()
@@ -270,6 +338,10 @@ function mao(){
     // Função que controla os pontos da mão e as ações da mão, não pode ser loop pq os pontos não são constantes
     // Uma mão é basicamente o ponto final do jogo,
     // aquele que fizer 12 pontos ganha uma mão, pode valer 1,3,6,9,12
+
+    console.log('COMEÇO DA MÃO'.bgWhite.black)
+
+    zerarpontos('rodada'); // zera os pontos da rodada porque é tipo 'rodada'
 
     if(pontosmao["Time1"] >= 12){
         return timeVencedor("Time1")
@@ -283,13 +355,17 @@ function mao(){
     // Pega as cartas do baralho, dá as cartas para os jogadores e mostra no HTML
     enviarCartasUI(baralho);
 
-    // Colocar a primeira carta na mesa
+    // Colocar a primeira carta na mesa e carrega a imagem no html
     vira = baralho.pop();
-
-    // Mostra img do vira na mesa
     carregarUmaImagemParaTodos("vira", "vira", vira);
-    console.log('passando pela função da mão'.green)
-    return rodada()
+
+    resetarEAtualizarScoreboard()
+
+    // reset básico do valor da vitória de três rodada
+    valorpontosrodada = 1;
+    return rodada().then(() => {
+        return mao();
+    });
 }
 
 async function rodada() {
@@ -297,101 +373,128 @@ async function rodada() {
     console.log('passando pela função da rodada'.magenta)
     let timevencedor;
     rodadanum++;
-    try {
-        const carta1 = await turno();
-        cartasrodada.push(carta1);
 
-        const carta2 = await turno();
-        cartasrodada.push(carta2);
+    const carta1 = await turno();
+    const carta2 = await turno();
+    const carta3 = await turno();
+    const carta4 = await turno();
+    cartasrodada.push(
+        carta1, carta2, carta3, carta4);
 
-        const carta3 = await turno();
-        cartasrodada.push(carta3);
+    console.log(`aqui está o cartasrodada: ${cartasrodada}`.yellow);
 
-        const carta4 = await turno();
-        cartasrodada.push(carta4);
+    timevencedor = checkmaiorCarta(cartasrodada, vira); // Checar qual é a carta mais forte
 
-        console.log(`aqui está o cartasrodada :) ${cartasrodada}`.yellow);
-        timevencedor = checkmaiorCarta(cartasrodada, vira); // Checar qual é a carta mais forte
+    console.log("o time vencedor é:",timevencedor)
 
-        console.log("o time vencedor é:",timevencedor)
-
-        atualizarPontosRodada(timevencedor);
-
-        console.log("pontos da mão:", pontosmao);
-        pontoparatimequejogoucarta = [];
-        zerarpontos('rodada'); // zera os pontos da rodada porque é tipo 'rodada'
-    }
-    catch (error) {
-        console.error("Ocorreu um erro durante a rodada:", error);
-    }
-
+    // -==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-
+    // Reseta as variáveis que são usadas na rodada
+    pontoparatimequejogoucarta = [];
     cartasrodada = [];
 
-    if(rodadanum == 3){
-        return mao();
+    // Tira as cartas jogadas da mesa
+    for(let i = 1; i < 5; i++) { io.sockets.emit('alterarvisibilidade', `cartajogadapessoa${i}`); }
+
+    // Checa o time que fez o ponto da rodada e atribui o ponto ao time
+    timevencedor = timevencedor % 2 == 0? "Time2" : "Time1";
+    let timeperdedor = timevencedor == "Time1"? "Time2" : "Time1"
+    pontosrodada[timevencedor] += 1;
+
+    let timevencedormao = pontosrodada["Time1"] > pontosrodada["Time2"] && pontosrodada["Time1"] >= 2? "Time1" : "Time2";
+
+    // Checa se um dos times já fez 2 pontos na rodada
+    if ((pontosrodada.Time1 == 2 || pontosrodada.Time2 == 2) && pontosrodada.Time1 != pontosrodada.Time2) {
+        console.log(`Eh o fim, o time vencedor dos pontos da mão é o ${timevencedormao}`)
+        pontosmao[timevencedormao] += valorpontosrodada;
+        console.log(`Time vencedor da rodada: ${timevencedor} pontosganhos: ${valorpontosrodada}`)
+        let idstirarhidden = [
+            'c1pessoa1carta','c1pessoa2carta','c1pessoa3carta',
+            'c2pessoa1carta','c2pessoa2carta','c2pessoa3carta',
+            'c3pessoa1carta','c3pessoa2carta','c3pessoa3carta',
+            'c4pessoa1carta','c4pessoa2carta','c4pessoa3carta'
+        ]
+        for(let i= 0; i < idstirarhidden.length; i++){ io.sockets.emit('removerhidden', idstirarhidden[i])}
+        return Promise.resolve();
     }
-    else{
-        return rodada();
-    }
+    atualizarScoreboardPontos(timevencedor,timeperdedor); // Atualiza HUD do jogo
+    return rodada();
 }
 
-function turno() {
-    let carregartempo = true;
+async function turno() {
+
     let jogadoratual = gerenciadorDeJogadoresNosTurnos(); // Retorna o primeiro jogador na lista aleatória de quem começa,
     // depois joga o primeiro jogador para a última fileira e o próximo será o segundo
     socketjogadoratual = jogadores[jogadoratual];
-    let numpessoa;
-    for(let i = 0; i < 4; i++){ // Acha o número da pessoa nos times para fazer algo nas cartas dela
-        if (jogadoratual == nomejogadorestime[i]){
-            numpessoa = i + 1;
-            break;
-        }
-    }
-    io.to(socketjogadoratual).emit('alterarvisibilidade', 'botaotruko');
-    if(carregartempo){
-        io.sockets.emit('carregarbarradetempo', jogadoratual);
-        // noinspection JSUnusedAssignment
-        carregartempo = false;
-    }
+    let numpessoa = acharNumPessoa(jogadoratual)
     cartaSelecionada = undefined;
     playerjogoucarta = false;
+    trukopressionado = false;
+    eventStatusHandler = 'jogarcarta'
+
+    let carta = await obterCarta(jogadoratual,numpessoa);
+    console.log(carta)
+
+    if (!(carta == 'Truko')) {
+        return carta
+    }
+
+    let respostaTruko = trukoAcoes()
+
+    console.log(respostaTruko)
+    if (respostaTruko == 'obtercarta'){
+        return await obterCarta(jogadoratual,numpessoa);
+    }
+    else if (respostaTruko == 'mao'){
+        mao()
+    }
+
+}
+
+// Handler da carta jogada ou não jogada resumindo
+function obterCarta(jogadoratual,numpessoa){
+
+    io.to(socketjogadoratual).emit('alterarvisibilidade', 'botaotruko');
+    io.sockets.emit('carregarbarradetempo', jogadoratual);
     let tempoesgotado = false;
+
     return new Promise((promessa) => {
-        const intervaloVerificacao = setInterval(() => { // Verifica a cada 100 ms se o jogador jogou uma carta,
-            // se ele jogou uma carta o checker acaba e o timeout de jogada automatica para também e ele retorna o .then do Promise,
-            // que retorna a carta que jogador jogou.
+        // Verifica a cada 100 ms se o jogador jogou uma carta, se ele jogou uma carta o checker acaba e o timeout de jogada automatica para também e ele retorna o .then do Promise, que retorna a carta que jogador jogou.
+        intervaloVerificacao = setInterval(() => {
             if (playerjogoucarta) {
                 clearInterval(intervaloVerificacao);
                 clearTimeout(temporestante);
+                removerCarta(jogadoratual, cartajogada, numpessoa);
                 promessa(cartajogada);
+            }
+            else if (trukopressionado){
+                // trukopressionado = false; // Se não colocar false roda um loop infinito nas verificações
+                clearInterval(intervaloVerificacao);
+                clearTimeout(temporestante);
+                promessa("Truko");
             }
         }, 100);
 
-        const temporestante = setTimeout(() => {
+        temporestante = setTimeout(() => {
+            console.log(`O jogador ${jogadoratual} não fez sua jogada! A primeira carta do baralho dele será jogada.`);
             if (!playerjogoucarta) {
                 clearInterval(intervaloVerificacao);
-                console.log(`O jogador ${jogadoratual} não fez sua jogada! A primeira carta do baralho dele será jogada.`);
-                const primeiraCarta = jogarPrimeiraCarta(jogadoratual, numpessoa);
+                cartaSelecionada = jogarPrimeiraCarta(jogadoratual, numpessoa);
                 tempoesgotado = true;
-                promessa([primeiraCarta]);
+                promessa([cartaSelecionada]);
             }
         }, 10000);
-    }
-    ).then((cartaSelecionada) => {
-        if(!tempoesgotado){
-            removerCarta(jogadoratual, cartaSelecionada, numpessoa);
-        }
+    }).then((cartaSelecionada) => {
         io.sockets.emit('carregarbarradetempo', 'parartimer');
         return cartaSelecionada;
     });
+
 }
 
-
 // FUNÇÕES DE AUXÍLIO PARA A LÓGICA PRINCIPAL DO JOGO
-
 function jogarPrimeiraCarta(jogador, pessoa){ // Joga a primeira carta do jogador atual porque ele não jogou uma carta
     let jogadorcarta = eval(`cartaspessoa${pessoa}`); // Retorna a lista de cartas do jogador
-    let primeiracarta = jogadorcarta[0];
+    let primeiracarta = jogadorcarta.find(cartas => cartas[0] !== "Removido");
+    cartajogada = primeiracarta;
     removerCarta(jogador, primeiracarta, pessoa);
     return primeiracarta;
 }
@@ -405,6 +508,9 @@ function enviarCartasUI(baralho){
     cartaspessoa4 = [baralho.pop(), baralho.pop(), baralho.pop()];
 
     const cartaspessoas = [cartaspessoa1, cartaspessoa2, cartaspessoa3, cartaspessoa4];
+
+    cartassalvaspessoas = [];
+    cartassalvaspessoas.push([...cartaspessoa1], [...cartaspessoa2], [...cartaspessoa3], [...cartaspessoa4]);
 
     for(let i = 0; i < 4; i++){ // For loop tem que mostrar para 4 jogadores e só pode mostrar 3 cartas
         io.to(jogadores[nomejogadorestime[i]]).emit('carregarcartas', cartaspessoas[i]);
@@ -439,6 +545,11 @@ function gerarBaralhoRandom(){
     return randomizar(baralhoinicial)
 }
 
+// Acha o número da pessoa para passar usar para verificar a variável de cartas
+function acharNumPessoa(jogadoratual){
+    return nomejogadorestime.indexOf(jogadoratual) + 1
+}
+
 // ____________________________ZERAR PONTOS TIMES____________________________
 function zerarpontos(tipodeponto){
     // tipos:
@@ -446,35 +557,38 @@ function zerarpontos(tipodeponto){
     // 1- pontosmao
     // 2- zerar todos os pontos do jogo
     if (tipodeponto == 'rodada') {
-        pontosrodada["Time1"] = 0
-        pontosrodada["Time2"] = 0
+        pontosrodada["Time1"] = 0;
+        pontosrodada["Time2"] = 0;
+        rodadanum = 0;
     }
     else if (tipodeponto == 'mao'){
-        pontosmao["Time1"] = 0
-        pontosmao["Time2"] = 0
+        pontosmao["Time1"] = 0;
+        pontosmao["Time2"] = 0;
     }
     else if (tipodeponto == 'todos'){
-        pontosmao["Time1"] = 0
-        pontosrodada["Time1"] = 0
-        pontosrodada["Time2"] = 0
-        pontosmao["Time2"] = 0
+        pontosmao["Time1"] = 0;
+        pontosrodada["Time1"] = 0;
+        pontosrodada["Time2"] = 0;
+        pontosmao["Time2"] = 0;
         // zerar todos os pontos do jogo
     }
 }
 
 // ____________________________REMOVE A CARTA DE UM JOGADOR____________________________
 function removerCarta(jogador, cartaremover, pessoa){
-    let jogadorcarta = eval(`cartaspessoa${pessoa}`); // Retorna a lista de cartas do jogador
+    let cartasjogador = eval(`cartaspessoa${pessoa}`); // Retorna a lista de cartas do jogador
     let numerodacarta;
     for(let i = 0; i < 3; i++){
-        if(jogadorcarta[i][0] == cartaremover[0] && jogadorcarta[i][1] == cartaremover[1]){
-            jogadorcarta.splice(i, 1); // Remove a carta que vai jogar da lista de cartas do jogador
+        if(cartassalvaspessoas[pessoa-1][i][0] == cartaremover[0] && cartassalvaspessoas[pessoa-1][i][1] == cartaremover[1]){
+            let cartaremovida = cartasjogador.splice(i, 1); // Remove a carta que vai jogar da lista de cartas do jogador e salva em variável
+            cartassalvaspessoas[pessoa-1][i] = "Removido"; // Preenche o espaço da carta removida com removido para não bugar pela posição
             numerodacarta = i;
+            console.log(`Removendo carta do jogador ${jogador}, ${cartaremovida}`.bgGreen);
+            console.log(`Cartas do jogador: ${cartassalvaspessoas[pessoa-1]}`.bgGreen);
             break;
         }
     }
-    io.to(jogadores[jogador]).emit('alterarvisibilidade', `c1pessoa${numerodacarta+1}carta`); // c1pessoa${numerodacarta+1}carta é o id no html da carta que o jogador selecionou
-    io.to(socketjogadoratual).emit('alterarvisibilidade', 'botaotruko');
+    updateCartasUI(jogador, numerodacarta, cartassalvaspessoas[pessoa-1])
     pontoparatimequejogoucarta.push(jogador);
 }
 
@@ -514,20 +628,30 @@ function checkmaiorCarta(cartascheck, manilhacheck) {
     let maiorvalor = -1;
     let maiorcarta;
     let timevencedor;
+    let empateCartas = []; // Lista para armazenar cartas empatadas
 
     // Checar o maior valor da carta
     for (let i = 0; i < 4; i++) {
         let carta = cartascheck[i];
         let valorCarta = cartasForca[carta[1]];
 
-        if (valorCarta > maiorvalor || (valorCarta === maiorvalor && nipeForca[carta[0]] > nipeForca[maiorcarta[0]])) {
+        if (valorCarta > maiorvalor) {
             maiorvalor = valorCarta;
             maiorcarta = carta;
+            empateCartas = [carta]; // Resetar lista de empates
+        } else if (valorCarta === maiorvalor) {
+            empateCartas.push(carta); // Adicionar à lista de empates
         }
 
         if (carta[1] === manilhaValor) {
             manilhachecks.push(carta);
         }
+    }
+
+    // Resolver empate de cartas não manilhas
+    if (empateCartas.length > 1 && maiorvalor < 10) { // Maiorvalor < 10 significa que não é manilha
+        console.log("Empate entre cartas não manilhas:", empateCartas);
+        return "empate"; // Retornar estado de empate
     }
 
     // Checa se tem uma manilha e qual é a manilha mais forte
@@ -541,10 +665,11 @@ function checkmaiorCarta(cartascheck, manilhacheck) {
         maiorcarta = maiorManilha;
     }
 
+    // Determina o time vencedor com base na maior carta
     for (let i = 0; i < cartascheck.length; i++) {
         if (cartascheck[i] === maiorcarta) {
             if (times['Time1']['1'] === pontoparatimequejogoucarta[i] || times['Time1']['2'] === pontoparatimequejogoucarta[i]) {
-                timevencedor = '1';
+                    timevencedor = '1';
             } else {
                 timevencedor = '2';
             }
@@ -557,73 +682,209 @@ function checkmaiorCarta(cartascheck, manilhacheck) {
 }
 
 
-function atualizarPontosRodada(timevencedor){
-    timevencedor = timevencedor % 2 == 0? "Time2" : "Time1";
-    let timeperdedor = timevencedor == "Time1"? "Time2" : "Time1"
-
-    if(timevencedor == 'Time1'){ // Checa o time que fez o ponto da rodada e atribui o ponto ao time
-        pontosrodada.Time1 += 1;
-    }
-    else if(timevencedor == 'Time2'){
-        pontosrodada.Time2 += 1;
-    }
-
-    // Checa se um dos times já fez 2 pontos na rodada
-    if (pontosrodada.Time1 == 2) {
-        pontosmao["Time1"] += pontospartida;
-        console.log("O time 1 fez 2 pontos na rodada".red);
-    } else if (pontosrodada.Time2 == 2) {
-        pontosmao["Time2"] += pontospartida;
-        console.log("O time 2 fez 2 pontos na rodada".red);
-    } else if (pontosrodada.Time1 == 2 && pontosrodada.Time2 == 2) {
-        timevencedor = desempatechecker(); // Faz o desempate se os dois times tem 2 pontos
-        pontosmao[timevencedor] += pontospartida;
-    }
-
-    console.log(pontosrodada)
-
+function atualizarScoreboardPontos(timevencedor, timeperdedor){
     // Atualiza o scoreboardzinho dos círculos no html
     io.to(jogadores[times[timevencedor]["1"]]).emit('carregarimagem', `seutime${rodadanum}`, `images/circuloverde.png`);
     io.to(jogadores[times[timevencedor]["2"]]).emit('carregarimagem', `seutime${rodadanum}`, `images/circuloverde.png`);
-    io.to(jogadores[times[timeperdedor]["1"]]).emit('carregarimagem', `outrotime${rodadanum}`, `images/circulovermelho.png`);
-    io.to(jogadores[times[timeperdedor]["2"]]).emit('carregarimagem', `outrotime${rodadanum}`, `images/circulovermelho.png`);
+    io.to(jogadores[times[timevencedor]["1"]]).emit('carregarimagem', `outrotime${rodadanum}`, `images/circulovermelho.png`);
+    io.to(jogadores[times[timevencedor]["2"]]).emit('carregarimagem', `outrotime${rodadanum}`, `images/circulovermelho.png`);
 
-    // Atualiza os pontos do lado dos círculos no html
-    io.to(jogadores[times[timevencedor]["1"]]).emit('atualizartexto', `seutimepontos`, `${pontosmao["Time1"]}`);
-    io.to(jogadores[times[timevencedor]["2"]]).emit('atualizartexto', `seutimepontos`, `${pontosmao["Time1"]}`);
-    io.to(jogadores[times[timeperdedor]["1"]]).emit('atualizartexto', `outrotimepontos`, `${pontosmao["Time2"]}`);
-    io.to(jogadores[times[timeperdedor]["2"]]).emit('atualizartexto', `outrotimepontos`, `${pontosmao["Time2"]}`);
+    io.to(jogadores[times[timeperdedor]["1"]]).emit('carregarimagem', `seutime${rodadanum}`, `images/circulovermelho.png`);
+    io.to(jogadores[times[timeperdedor]["2"]]).emit('carregarimagem', `seutime${rodadanum}`, `images/circulovermelho.png`);
+    io.to(jogadores[times[timeperdedor]["1"]]).emit('carregarimagem', `outrotime${rodadanum}`, `images/circuloverde.png`);
+    io.to(jogadores[times[timeperdedor]["2"]]).emit('carregarimagem', `outrotime${rodadanum}`, `images/circuloverde.png`);
+
+}
+
+
+//____________________________GERENCIA AÇÕES AO APERTAR TRUKO____________________________ TODO PROBLEM ESTÁ AQUI!!!!!
+function trukoAcoes() {
+
+   eventStatusHandler = 'trukoOpcoes';
+
+   trukoaceito = trukoWaiter()
+
+   jogadorescorrendo = 0
+   io.sockets.emit('atualizartexto', 'valorpontosrodada', valorpontosrodada);
+   io.to(socketjogadoratual).emit('alterarvisibilidade', 'repostatruko');
+   // Checa se o truko foi aceito ou não, se foi aceito ele retorna para o meliante selecionar a carta
+   if (trukoaceito) {
+       return 'obtercarta'
+   } else {
+       return 'mao'
+   }
+
+}
+
+
+// Aguarda os jogadores selecionarem aceitar ou correr ou somar
+function trukoWaiter(){
+    let tempoesgotado = false;
+    return new Promise((promessa) => {
+
+        intervaloVerificacao = setInterval(() => { // Checa o botão que o jogador enviou de truko, se não enviar = correu
+            if (jogadoresQueResponderamAoTruko.length == 2 || trukoaceito == true) {
+                clearInterval(intervaloVerificacao);
+                clearTimeout(temporestante);
+                promessa(trukoaceito);
+            }
+        }, 100);
+
+        temporestante = setTimeout(() => {
+            if (jogadoresQueResponderamAoTruko.length == 2 || trukoaceito == true) {
+                clearInterval(intervaloVerificacao);
+                console.log(`Truko não foi aceito porque os jogadores demoraram de mais para aceitar/correr/+6`);
+                tempoesgotado = true;
+                promessa(trukoaceito);
+            }
+        }, 15000);
+    }).then( () => {
+        io.sockets.emit('pedirtruko', 'parartimer', null);
+        return trukoaceito;
+    });
 }
 
 // ____________________________GERENCIA AS AÇÕES DAS PESSOAS QUE RECEBERAM TRUKO____________________________
-function trukoHandler(action){
-    let jogadorescorrendo = 0;
+function trukoActionHandler(action){
     let timequepediutruko = timetrukado == "Time1" ? "Time2" : "Time1"
 
+    console.log(`acao no trukohandler: ${action}`)
     if(action == 'soma'){
-        valorpontosrodada+= 3;
-        io.to(jogadores[times[timetrukado]["1"]]).emit('alterarvisibilidade', 'positionbotoes');
-        io.to(jogadores[times[timetrukado]["2"]]).emit('alterarvisibilidade', 'positionbotoes');
-        // mostrar que pediu mais e mostrar o número que vai ficar
+        valorpontosrodada = valorpontosrodada == 1 ? 6 : valorpontosrodada + 3;
+        trukoaceito = true;
     }
     else if(action == 'aceitar'){
-        // mostrar que aceitou o truko
-        // remover o hud de +/aceitar/correr
-        io.to(jogadores[times[timetrukado]["1"]]).emit('alterarvisibilidade', 'positionbotoes');
-        io.to(jogadores[times[timetrukado]["2"]]).emit('alterarvisibilidade', 'positionbotoes');
+        valorpontosrodada = valorpontosrodada == 1 ? 3 : valorpontosrodada;
+        trukoaceito = true;
     }
     else if(action == 'correr'){
         jogadorescorrendo++;
         if(jogadorescorrendo == 2){
             pontosmao[timequepediutruko] += pontosrodada
-            io.to(jogadores[times[timetrukado]["1"]]).emit('alterarvisibilidade', 'positionbotoes');
-            io.to(jogadores[times[timetrukado]["2"]]).emit('alterarvisibilidade', 'positionbotoes');
+            trukoaceito = true;
         }
         // mostrar que correu do truko
     }
+    console.log("jogadores correndo:",jogadorescorrendo, 'timequepdiutruko:',timequepediutruko, 'trukoaceito:',trukoaceito, 'acaoenviada',action)
+}
+
+// TODO - CONCERTAR PERSPECTIVA DE VISÃO DO JOGADOR 2, JOGADOR 1111 E 3333 ESTÃO INVERTIDOS
+// Atualiza as cartas dos jogadores na visão de cada um e a posição da carta na frente do jogador
+function updateCartasUI(jogadoratual, numcarta, cartasjogador){
+
+    // Remove a carta na visão de 1º pessoa
+    io.to(jogadores[jogadoratual]).emit('alterarvisibilidade', `c1pessoa${numcarta+1}carta`); // c1pessoa${numerodacarta+1}carta é o id no html da carta que o jogador selecionou
+    io.to(socketjogadoratual).emit('alterarvisibilidade', 'botaotruko');
+
+    let posjogadoratual = nomejogadorestime.indexOf(jogadoratual)
+    const poscartadeletar = cartasjogador.filter(element => element === "Removido").length;
+    // Para quando a pessoa 1 clicar
+    if(nomejogadorestime[0] == jogadoratual){
+        // Mostrar a carta para cada pessoa de uma perspectiva diferente:
+        // Pessoa 1:
+        io.to(jogadores[jogadoratual]).emit('alterarvisibilidade', `cartajogadapessoa1`);
+        io.to(jogadores[jogadoratual]).emit('carregarimagem', `cartajogadapessoa1`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        // Pessoa 2:
+        io.to(jogadores[nomejogadorestime[1]]).emit('alterarvisibilidade', `cartajogadapessoa3`);
+        io.to(jogadores[nomejogadorestime[1]]).emit('carregarimagem', `cartajogadapessoa3`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        io.to(jogadores[nomejogadorestime[1]]).emit('alterarvisibilidade', `c3pessoa${poscartadeletar}carta`);
+        // Pessoa 3:
+        io.to(jogadores[nomejogadorestime[2]]).emit('alterarvisibilidade', `cartajogadapessoa2`);
+        io.to(jogadores[nomejogadorestime[2]]).emit('carregarimagem', `cartajogadapessoa2`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        io.to(jogadores[nomejogadorestime[2]]).emit('alterarvisibilidade', `c2pessoa${poscartadeletar}carta`);
+        // Pessoa 4:
+        io.to(jogadores[nomejogadorestime[3]]).emit('alterarvisibilidade', `cartajogadapessoa4`);
+        io.to(jogadores[nomejogadorestime[3]]).emit('carregarimagem', `cartajogadapessoa4`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        io.to(jogadores[nomejogadorestime[3]]).emit('alterarvisibilidade', `c4pessoa${poscartadeletar}carta`);
+    }
+    // Para quando a pessoa 2 clicar
+    else if(nomejogadorestime[1] == jogadoratual){
+        // Pessoa 1:
+        io.to(jogadores[nomejogadorestime[0]]).emit('alterarvisibilidade', `cartajogadapessoa3`);
+        io.to(jogadores[nomejogadorestime[0]]).emit('carregarimagem', `cartajogadapessoa3`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        io.to(jogadores[nomejogadorestime[0]]).emit('alterarvisibilidade', `c3pessoa${poscartadeletar}carta`);
+        // Pessoa 2:
+        io.to(jogadores[jogadoratual]).emit('alterarvisibilidade', `cartajogadapessoa1`);
+        io.to(jogadores[jogadoratual]).emit('carregarimagem', `cartajogadapessoa1`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        // Pessoa 3:
+        io.to(jogadores[nomejogadorestime[2]]).emit('alterarvisibilidade', `cartajogadapessoa4`);
+        io.to(jogadores[nomejogadorestime[2]]).emit('carregarimagem', `cartajogadapessoa4`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        io.to(jogadores[nomejogadorestime[2]]).emit('alterarvisibilidade', `c4pessoa${poscartadeletar}carta`);
+        // Pessoa 4:
+        io.to(jogadores[nomejogadorestime[3]]).emit('alterarvisibilidade', `cartajogadapessoa2`);
+        io.to(jogadores[nomejogadorestime[3]]).emit('carregarimagem', `cartajogadapessoa2`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        io.to(jogadores[nomejogadorestime[3]]).emit('alterarvisibilidade', `c2pessoa${poscartadeletar}carta`);
+    }
+    // Para quando a pessoa 3 clicar
+    else if(nomejogadorestime[2] == jogadoratual){
+        io.to(jogadores[nomejogadorestime[0]]).emit('alterarvisibilidade', `cartajogadapessoa2`);
+        io.to(jogadores[nomejogadorestime[0]]).emit('carregarimagem', `cartajogadapessoa2`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        io.to(jogadores[nomejogadorestime[0]]).emit('alterarvisibilidade', `c2pessoa${poscartadeletar}carta`);
+        // Pessoa 2:
+        io.to(jogadores[nomejogadorestime[1]]).emit('alterarvisibilidade', `cartajogadapessoa4`);
+        io.to(jogadores[nomejogadorestime[1]]).emit('carregarimagem', `cartajogadapessoa4`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        io.to(jogadores[nomejogadorestime[1]]).emit('alterarvisibilidade', `c4pessoa${poscartadeletar}carta`);
+        // Pessoa 3:
+        io.to(jogadores[jogadoratual]).emit('alterarvisibilidade', `cartajogadapessoa1`);
+        io.to(jogadores[jogadoratual]).emit('carregarimagem', `cartajogadapessoa1`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        // Pessoa 4:
+        io.to(jogadores[nomejogadorestime[3]]).emit('alterarvisibilidade', `cartajogadapessoa3`);
+        io.to(jogadores[nomejogadorestime[3]]).emit('carregarimagem', `cartajogadapessoa3`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        io.to(jogadores[nomejogadorestime[3]]).emit('alterarvisibilidade', `c3pessoa${poscartadeletar}carta`);
+    }
+    // Para quando a pessoa 4 clicar
+    else if(nomejogadorestime[3] == jogadoratual){
+        io.to(jogadores[nomejogadorestime[0]]).emit('alterarvisibilidade', `cartajogadapessoa4`);
+        io.to(jogadores[nomejogadorestime[0]]).emit('carregarimagem', `cartajogadapessoa4`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        io.to(jogadores[nomejogadorestime[0]]).emit('alterarvisibilidade', `c4pessoa${poscartadeletar}carta`);
+        // Pessoa 2:
+        io.to(jogadores[nomejogadorestime[1]]).emit('alterarvisibilidade', `cartajogadapessoa2`);
+        io.to(jogadores[nomejogadorestime[1]]).emit('carregarimagem', `cartajogadapessoa2`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        io.to(jogadores[nomejogadorestime[1]]).emit('alterarvisibilidade', `c2pessoa${poscartadeletar}carta`);
+        // Pessoa 3:
+        io.to(jogadores[nomejogadorestime[2]]).emit('alterarvisibilidade', `cartajogadapessoa3`);
+        io.to(jogadores[nomejogadorestime[2]]).emit('carregarimagem', `cartajogadapessoa3`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+        io.to(jogadores[nomejogadorestime[2]]).emit('alterarvisibilidade', `c3pessoa${poscartadeletar}carta`);
+        // Pessoa 4:
+        io.to(jogadores[jogadoratual]).emit('alterarvisibilidade', `cartajogadapessoa1`);
+        io.to(jogadores[jogadoratual]).emit('carregarimagem', `cartajogadapessoa1`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
+    }
+    else{
+        console.log('ERRO NENHUM JOGADOR ENCONTRADO PARA ATUALIZAR O UI, function: updateUI')
+    }
+}
+
+// Reseta os círculos na scoreboard e atualiza os pontos da mão
+function resetarEAtualizarScoreboard() {
+    // Reseta scoreboard das rodadas
+    io.sockets.emit('carregarimagem', `seutime1`, `images/circulo.png`);
+    io.sockets.emit('carregarimagem', `seutime2`, `images/circulo.png`);
+    io.sockets.emit('carregarimagem', `seutime3`, `images/circulo.png`);
+
+    io.sockets.emit('carregarimagem', `outrotime1`, `images/circulo.png`);
+    io.sockets.emit('carregarimagem', `outrotime2`, `images/circulo.png`);
+    io.sockets.emit('carregarimagem', `outrotime3`, `images/circulo.png`);
+
+    // Atualiza os pontos do lado dos círculos no html
+    console.log("Pontos mão abaixo:".bgWhite.black)
+    console.log(pontosmao["Time1"])
+    console.log(pontosmao["Time2"])
+    console.log("-=-=-=-=-=-=-=-=-=-".bgWhite.black)
+    io.to(jogadores[times["Time1"]["1"]]).emit('atualizartexto', `seutimepontos`, `${pontosmao["Time1"]}`);
+    io.to(jogadores[times["Time1"]["2"]]).emit('atualizartexto', `seutimepontos`, `${pontosmao["Time1"]}`);
+    io.to(jogadores[times["Time1"]["1"]]).emit('atualizartexto', `outrotimepontos`, `${pontosmao["Time2"]}`);
+    io.to(jogadores[times["Time1"]["2"]]).emit('atualizartexto', `outrotimepontos`, `${pontosmao["Time2"]}`);
+
+    io.to(jogadores[times["Time2"]["1"]]).emit('atualizartexto', `seutimepontos`, `${pontosmao["Time2"]}`);
+    io.to(jogadores[times["Time2"]["2"]]).emit('atualizartexto', `seutimepontos`, `${pontosmao["Time2"]}`);
+    io.to(jogadores[times["Time2"]["1"]]).emit('atualizartexto', `outrotimepontos`, `${pontosmao["Time1"]}`);
+    io.to(jogadores[times["Time2"]["2"]]).emit('atualizartexto', `outrotimepontos`, `${pontosmao["Time1"]}`);
 }
 
 // ____________________________FAZ AS AÇÕES DE QUEM VENCEU O JOGO____________________________
 function timeVencedor(time){
     // fazer a lógica de o que acontece quando algum time vence o jogo
+    console.log(`|----------------------------| \n
+                 |         FIM DO JOGO        | \n
+                 |----------------------------|`)
 }
