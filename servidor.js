@@ -5,7 +5,7 @@ const io = require('socket.io')(http);
 const colors = require("colors")
 const {query} = require("express");
 app.use(express.static("./public"));
-http.listen(80);
+http.listen(8787);
 console.log("The Dark Night Returns".black);
 
 // ____________________________ Parte do registro de conexões do jogador :D ____________________________
@@ -716,31 +716,48 @@ function trukoAcoes() {
 
 }
 
+function trukoFoiAceito() 
+{
+
+}
 
 // Aguarda os jogadores selecionarem aceitar ou correr ou somar
 function trukoWaiter(){
-    let tempoesgotado = false;
-    return new Promise((promessa) => {
+    console.log("Iniciando trukoWaiter");
 
-        intervaloVerificacao = setInterval(() => { // Checa o botão que o jogador enviou de truko, se não enviar = correu
+    return new Promise((promessa) => {
+        console.log("Criando intervalo de verificação");    
+        intervaloVerificacao = setInterval(() => {
+            console.log("Verificando condição do Truko");
             if (jogadoresQueResponderamAoTruko.length == 2 || trukoaceito == true) {
-                clearInterval(intervaloVerificacao);
+                let intervaloVerificacaoID = intervaloVerificacao[Symbol.toPrimitive](); // https://stackoverflow.com/questions/46588994/how-to-use-setinterval-and-clearinterval-in-nodejs
+                clearInterval(intervaloVerificacaoID);
                 clearTimeout(temporestante);
+                console.log(`Truko foi aceito!`, intervaloVerificacaoID);
                 promessa(trukoaceito);
             }
         }, 100);
+        console.log("Intervalo de verificação criado");
 
+        console.log("Criando setTimeout");
         temporestante = setTimeout(() => {
-            if (jogadoresQueResponderamAoTruko.length == 2 || trukoaceito == true) {
-                clearInterval(intervaloVerificacao);
-                console.log(`Truko não foi aceito porque os jogadores demoraram de mais para aceitar/correr/+6`);
-                tempoesgotado = true;
+                let intervaloVerificacaoID = intervaloVerificacao[Symbol.toPrimitive]();
+                clearInterval(intervaloVerificacaoID);
+                if (jogadoresQueResponderamAoTruko.length == 2 || trukoaceito == true) {
+                    console.log(`Truko aceito e timeout foi cancelado`);
+                    return;
+                } else {
+                    console.log(`Truko não foi aceito porque os jogadores demoraram de mais para aceitar/correr/+6`);
+                }
                 promessa(trukoaceito);
-            }
         }, 15000);
     }).then( () => {
+        console.log("Promessa resolvida");
         io.sockets.emit('pedirtruko', 'parartimer', null);
         return trukoaceito;
+    }).finally(() => {
+        console.log("Finalizando trukoWaiter");
+
     });
 }
 
