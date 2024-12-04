@@ -16,7 +16,7 @@ const times = {Time1: {"1": null, "2": null}, Time2: {"1": null, "2": null}};
 const nomestime = [];
 let playerjogoucarta = false;
 let cartajogada;
-let valorpontosrodada = 1;
+let valorpontosmao = 1;
 let timetrukado;
 let socketjogadoratual;
 let nomejogadorestime;
@@ -24,7 +24,7 @@ let jogadoresID;
 let jogadoresQueResponderamAoTruko = [];
 let trukoaceito = false;
 let eventStatusHandler = "selecionarTimes";
-let trukopressionado
+let trukopressionado;
 
 io.on('connection', (socket) => {
     // Registra o nome em na variável jogadores e o socket id no jogadoresPorId e retorna para jogadoresConectados
@@ -98,7 +98,6 @@ io.on('connection', (socket) => {
 
         cartaSelecionada = cartajogada;
         playerjogoucarta = true;
-        console.log(`Carta jogada pelo jogador com ID: ${socket.id}, carta:`, cartaSelecionada);
     });
 
     // Gerenciar o click no botão de TRUKO
@@ -108,12 +107,9 @@ io.on('connection', (socket) => {
 
         let jogador = jogadoresPorId[socket.id]
         timetrukado = (times["Time1"]["1"] === jogador || times["Time1"]["2"] === jogador) ? "Time2" : "Time1";
-        console.log(`Botao de truko pressionado por: ${socket.id}, jogador: ${jogador}`);
-        console.log(`time trukado: ${timetrukado}, membros do time trukado: ${times[timetrukado]["1"]}, ${times[timetrukado]["2"]}`);
 
         io.to(socketjogadoratual).emit('alterarvisibilidade', 'botaotruko'); // Remove o botão truko do ui
         // Mostra as opções para truko e carrega a barra de tempo para o truko
-        io.sockets.emit('alterarvisibilidade', 'repostatruko');
         io.sockets.emit('pedirtruko', 'truko', jogador);
         // Carregar botões de aceitar correr +6 pros trukados
         io.to(jogadores[times[timetrukado]["1"]]).emit('alterarvisibilidade', 'positionbotoes');
@@ -125,28 +121,23 @@ io.on('connection', (socket) => {
     });
 
     // Gerencia as ações do Truko do time trukado
-    socket.on('trukohandler', (action) => { // Controla as ações que os botões de truko fazem
-
-        // Autorizador de eventos, se for negado o pedido nada acontecerá.
+    socket.on('trukohandler', (action) => {
         if ( !autorizarEvento(socket.id, 'trukoOpcoes', ['Executando a ação:'.blue, `${action}`.green] )){return;}
 
         let nomeJogador = jogadoresPorId[socket.id];
-        console.log(!(jogadoresQueResponderamAoTruko.includes(nomeJogador)))
-        if(!(jogadoresQueResponderamAoTruko.includes(nomeJogador))) { // Checa se o mesmo jogador que clicou já deu uma resposta
-
+        if (!jogadoresQueResponderamAoTruko.includes(nomeJogador)) {
             jogadoresQueResponderamAoTruko.push(nomeJogador);
             io.to(socket.id).emit('alterarvisibilidade', 'positionbotoes');
 
-            action = action == "+" ? "soma" : action;
-            let posicao = times['Time1']['1'] == nomeJogador ? '1' : '2';
-            io.sockets.emit('alterarvisibilidade', `respostajogador${posicao}`);
-            io.sockets.emit('atualizartexto', `respostajogador${posicao}`, `${jogadoresPorId[socket.id]} ${action == "soma" ? "Somou!" : (action == "aceitar" ? "Aceitou!" : (action == "correr" ? "Correu!" : "ERRO"))}`);
+            action = action === "+" ? "soma" : action;
+            let posicao = times[timetrukado]['1'] === nomeJogador ? '1' : '2';
+            io.sockets.emit('acaoTrukoAnuncio', `respostajogador${posicao}`,
+                `${jogadoresPorId[socket.id]} ${action === "soma" ? "Somou!" : (action === "aceitar" ? "Aceitou!" : "Correu!")}`);
 
-            console.log(`jogador que clicou na acao do truko: ${nomeJogador} ${socket.id}, ação: ${action}`)
-
-            return trukoActionHandler(action);
+            trukoActionHandler(action);
         }
-    })
+    });
+
 });
 
 // Autoriza os eventos e garante que ninguém tente bancar uma de engraçadinho na partida
@@ -178,8 +169,9 @@ function autorizarEvento(id, eventoExecutado, extra= ["Sem informações extra"]
         if (!cartasdojogador.some(carta => JSON.stringify(carta) === JSON.stringify(cartajogada))){
             console.log(
                 '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'.red.bold, 'TRUKO'.yellow.bold, 'SECURITY'.red.bold, '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- \n'.red.bold,
-                'Tentativa de CartaInjection detectada e bloqueada!'.red.bold, `Evento:`.blue, `jogarcarta`.green, `Jogador:`.blue, `${jogadoresPorId[id]}\n`.green,
+                'Tentativa de CartaInjection detectada e bloqueada!'.red.bold, `Evento:`.blue, `${eventStatusHandler}`.green, `Jogador:`.blue, `${jogadoresPorId[id]}\n`.green,
                 'Carta que ele tentou jogar: '.blue, `${cartajogada}\n`.green,
+                'Cartas do jogador: '.blue, `${eval(`cartaspessoa${acharNumPessoa(jogadoresPorId[id])}`)}\n`.green,
                 '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- \n'.red.bold);
             io.sockets.emit('mensagemerro', `O jogador ${jogadoresPorId[id]} tentou trapacear... ;(`)
             return false;
@@ -226,7 +218,7 @@ function rodarTimerComecar(){ // TODO: Fazer com que se um jogador sair o timer 
         if (temporestante < 0) { // Quando o tempo é menor que 0 ele para o timer e inicia a função que starta o jogo
             clearInterval(Intervalo);
             gameStart().then(r => {
-                print("Jogo finalizado")
+                console.log("Jogo finalizado");
             })
         }
     }, 1000);
@@ -280,13 +272,11 @@ function carregarUmaImagemParaTodos(tipo, id, imagem){
     }
 }
 
-
 // ____________________________FUNÇÕES MAIN DO JOGO____________________________
 
 let pontosmao;
 let pontosrodada;
-let primeiroturno = true
-
+let primeiroturno = true;
 let cartaSelecionada = undefined;
 let cartaspessoa1;
 let cartaspessoa2;
@@ -295,10 +285,15 @@ let cartaspessoa4;
 let listajogadoresturno;
 let cartasrodada = [];
 let vira;
+let maiorcarta;
+let turnonum = 0;
+let maonum = 0;
 let pontoparatimequejogoucarta = [];
 let rodadanum = 0;
 let cartassalvaspessoas;
 let jogadorescorrendo = 0
+let timevencedormao;
+let jogadorVencedorRodada;
 
 // Controle dos intervalos de verificação e timers
 let intervaloVerificacao;
@@ -330,134 +325,254 @@ function gameStart() {
 
     posicaoJogadoresUI(posicaojogadores) //  Deixa a parte dos times invisível, coloca os assets do jogo visível
     // e ajusta a posição de todos os jogadores com as respectivas perspectivas
-
-    return mao()
+    console.log("JOGO INICIADO COM SUCESSO!!".bgYellow);
+    return mao();
 }
 
-function mao(){
+async function mao(){
     // Função que controla os pontos da mão e as ações da mão, não pode ser loop pq os pontos não são constantes
     // Uma mão é basicamente o ponto final do jogo,
     // aquele que fizer 12 pontos ganha uma mão, pode valer 1,3,6,9,12
+    while(true){
+        maonum++;
 
-    console.log('COMEÇO DA MÃO'.bgWhite.black)
+        resetarEAtualizarScoreboard();
 
-    zerarpontos('rodada'); // zera os pontos da rodada porque é tipo 'rodada'
+        if(pontosmao["Time1"] >= 12){
+            io.sockets.emit('atualizartexto', 'turnojogadortempo', 'Time 1 Venceu!');
+            io.sockets.emit('atualizartexto', 'temporestantejogada', 'FIM');
+            return timeVencedor("Time1")
+        }
+        else if(pontosmao["Time2"] >= 12){
+            io.sockets.emit('atualizartexto', 'turnojogadortempo', 'Time 1 Venceu!');
+            io.sockets.emit('atualizartexto', 'temporestantejogada', 'FIM');
+            return timeVencedor("Time2")
+        }
 
-    if(pontosmao["Time1"] >= 12){
-        return timeVencedor("Time1")
+        let baralho = gerarBaralhoRandom();
+        zerarpontos('rodada'); // zera os pontos da rodada porque é tipo 'rodada'
+
+        for(let i = 2; i < 5; i++){
+            for(let j = 1; j < 4; j++){
+                let id2 = `c${i}pessoa${j}carta`
+                io.sockets.emit('removerhidden', id2);
+            }
+        }
+
+        // Pega as cartas do baralho, dá as cartas para os jogadores e mostra no HTML
+        enviarCartasUI(baralho);
+        // Colocar a primeira carta na mesa e carrega a imagem no html
+        vira = baralho.pop();
+        carregarUmaImagemParaTodos("vira", "vira", vira);
+        // reset básico do valor da vitória de três rodada
+        valorpontosmao = 1;
+        // Reseta o vencedor da rodada
+        jogadorVencedorRodada = null;
+
+        let resultadoTruko = await rodada();
+
+        console.log(`
+-=-=-=-=-=-=-=-=-=-=-=-=- Resumo da mao ${maonum} -=-=-=-=-=-=-=-=-=-=-=-=- \n
+        Time Vencedor Mao: ${timevencedormao}
+        Valor Mao: ${valorpontosmao}
+        Vira: ${vira}
+        Truko: ${(resultadoTruko == 'truko')}
+        Truko Aceito: ${(resultadoTruko == 'truko') ? trukoaceito : false}
+        Rodada Normal: ${(resultadoTruko == 'rodada_completa')}
+        TimeTrukou: ${(resultadoTruko == 'truko') ? (timetrukado === "Time1" ? "Time1" : "Time2") : null}
+        TimeTrukado: ${(resultadoTruko == 'truko') ? timetrukado : null}
+        Pontos Mao Time1: ${pontosmao["Time1"]}
+        Pontos Mao Time2: ${pontosmao["Time2"]}
+-=-=-=-=-=-=-=-=-=-=-=-=-                   -=-=-=-=-=-=-=-=-=-=-=-=-
+        `.red);
     }
-    else if(pontosmao["Time2"] >= 12){
-        return timeVencedor("Time2")
-    }
-
-    let baralho = gerarBaralhoRandom();
-
-    // Pega as cartas do baralho, dá as cartas para os jogadores e mostra no HTML
-    enviarCartasUI(baralho);
-
-    // Colocar a primeira carta na mesa e carrega a imagem no html
-    vira = baralho.pop();
-    carregarUmaImagemParaTodos("vira", "vira", vira);
-
-    resetarEAtualizarScoreboard()
-
-    // reset básico do valor da vitória de três rodada
-    valorpontosrodada = 1;
-    return rodada().then(() => {
-        return mao();
-    });
 }
 
 async function rodada() {
-    // Uma rodada é 1/12 da mão, onde os jogadores precisam de 2 pontos para vencer
-    console.log('passando pela função da rodada'.magenta)
-    let timevencedor;
-    rodadanum++;
+    while(true){
+        // Uma rodada é 1/12 da mão, onde os jogadores precisam de 2 pontos para vencer
+        let timevencedor;
+        let carta;
+        rodadanum++;
+        primeiroturno = true;
+        let cartasdosjogadoresrodada = [
+            [...cartaspessoa1],
+            [...cartaspessoa2],
+            [...cartaspessoa3],
+            [...cartaspessoa4]
+        ];
 
-    const carta1 = await turno();
-    const carta2 = await turno();
-    const carta3 = await turno();
-    const carta4 = await turno();
-    cartasrodada.push(
-        carta1, carta2, carta3, carta4);
 
-    console.log(`aqui está o cartasrodada: ${cartasrodada}`.yellow);
+        // Faz o gerenciamento dos 4 turnos
+        for(let i = 0; i < 4; i++){
+            carta = await turno();
+            cartasrodada.push(carta);
 
-    timevencedor = checkmaiorCarta(cartasrodada, vira); // Checar qual é a carta mais forte
+            if(carta == 'mao'){
+                console.log(`
+-=-=-=-=-=-=-=-=-=-=-=-=- Resumo da rodada ${rodadanum} -=-=-=-=-=-=-=-=-=-=-=-=- \n
+        Rodada vencida por Correr Truko: true
+        Pontos Rodada Time1: ${pontosrodada.Time1}
+        Pontos Rodada Time2: ${pontosrodada.Time2}
+        Time Vencedor: ${timetrukado == "Time1" ? "Time1" : "Time2"}
+        Time Que Perdeu: ${timetrukado}
+        Cartas rodada: ${cartasrodada}
+        Valor Pontos Mao: ${valorpontosmao}
+-=-=-=-=-=-=-=-=-=-=-=-=-                   -=-=-=-=-=-=-=-=-=-=-=-=-
+        `.yellow);
+                for(let i = 1; i < 5; i++) { io.sockets.emit('removerhidden', `cartajogadapessoa${i}`); }
+                for(let i = 1; i < 5; i++) { io.sockets.emit('alterarvisibilidade', `cartajogadapessoa${i}`); }
+                pontoparatimequejogoucarta = [];
+                cartasrodada = [];
+                return 'truko';
+            }
+        }
 
-    console.log("o time vencedor é:",timevencedor)
+        timevencedor = checkmaiorCarta(cartasrodada, vira); // Checar qual é a carta mais forte
 
-    // -==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-=-=-=-=-
-    // Reseta as variáveis que são usadas na rodada
-    pontoparatimequejogoucarta = [];
-    cartasrodada = [];
+        jogadorVencedorRodada = encontrarJogadorComCarta(cartasdosjogadoresrodada, maiorcarta);
 
-    // Tira as cartas jogadas da mesa
-    for(let i = 1; i < 5; i++) { io.sockets.emit('alterarvisibilidade', `cartajogadapessoa${i}`); }
+        // Tira as cartas jogadas da mesa
+        for(let i = 1; i < 5; i++) { io.sockets.emit('alterarvisibilidade', `cartajogadapessoa${i}`); }
 
-    // Checa o time que fez o ponto da rodada e atribui o ponto ao time
-    timevencedor = timevencedor % 2 == 0? "Time2" : "Time1";
-    let timeperdedor = timevencedor == "Time1"? "Time2" : "Time1"
-    pontosrodada[timevencedor] += 1;
+        // Checa o time que fez o ponto da rodada e atribui o ponto ao time
+        timevencedor = timevencedor % 2 == 0? "Time2" : "Time1";
+        let timeperdedor = timevencedor == "Time1"? "Time2" : "Time1"
+        pontosrodada[timevencedor] += 1;
 
-    let timevencedormao = pontosrodada["Time1"] > pontosrodada["Time2"] && pontosrodada["Time1"] >= 2? "Time1" : "Time2";
+        timevencedormao = pontosrodada["Time1"] > pontosrodada["Time2"] && pontosrodada["Time1"] >= 2? "Time1" : "Time2";
 
-    // Checa se um dos times já fez 2 pontos na rodada
-    if ((pontosrodada.Time1 == 2 || pontosrodada.Time2 == 2) && pontosrodada.Time1 != pontosrodada.Time2) {
-        console.log(`Eh o fim, o time vencedor dos pontos da mão é o ${timevencedormao}`)
-        pontosmao[timevencedormao] += valorpontosrodada;
-        console.log(`Time vencedor da rodada: ${timevencedor} pontosganhos: ${valorpontosrodada}`)
-        let idstirarhidden = [
-            'c1pessoa1carta','c1pessoa2carta','c1pessoa3carta',
-            'c2pessoa1carta','c2pessoa2carta','c2pessoa3carta',
-            'c3pessoa1carta','c3pessoa2carta','c3pessoa3carta',
-            'c4pessoa1carta','c4pessoa2carta','c4pessoa3carta'
-        ]
-        for(let i= 0; i < idstirarhidden.length; i++){ io.sockets.emit('removerhidden', idstirarhidden[i])}
-        return Promise.resolve();
+        console.log(`
+-=-=-=-=-=-=-=-=-=-=-=-=- Resumo da rodada ${rodadanum} -=-=-=-=-=-=-=-=-=-=-=-=- \n
+        Rodada vencida por Correr Truko: false
+        Pontos Rodada Time1: ${pontosrodada.Time1}
+        Pontos Rodada Time2: ${pontosrodada.Time2}
+        Time Vencedor: ${timevencedor}
+        Time Que Perdeu: ${timeperdedor}
+        Carta mais forte: ${maiorcarta}
+        Jogador Que Ganhou: ${jogadorVencedorRodada}
+        PlayerJogouCarta: ${playerjogoucarta}
+        Cartas rodada: ${cartasrodada}
+        Valor Pontos Mao: ${valorpontosmao}
+        Time Vendedor Mao: ${timevencedormao}
+-=-=-=-=-=-=-=-=-=-=-=-=-                   -=-=-=-=-=-=-=-=-=-=-=-=-
+        `.yellow);
+
+        // Reseta as variáveis que são usadas na rodada
+        pontoparatimequejogoucarta = [];
+        cartasrodada = [];
+
+        // Checa se um dos times já fez 2 pontos na rodada
+        if ((pontosrodada.Time1 == 2 || pontosrodada.Time2 == 2) && pontosrodada.Time1 != pontosrodada.Time2) {
+            pontosmao[timevencedormao] += valorpontosmao;
+            let idstirarhidden = [
+                'c1pessoa1carta','c1pessoa2carta','c1pessoa3carta',
+                'c2pessoa1carta','c2pessoa2carta','c2pessoa3carta',
+                'c3pessoa1carta','c3pessoa2carta','c3pessoa3carta',
+                'c4pessoa1carta','c4pessoa2carta','c4pessoa3carta'
+            ]
+            for(let i= 0; i < idstirarhidden.length; i++){ io.sockets.emit('removerhidden', idstirarhidden[i])}
+
+
+            return 'rodada_completa';
+        }
+        atualizarScoreboardPontos(timevencedor,timeperdedor); // Atualiza HUD do jogo
     }
-    atualizarScoreboardPontos(timevencedor,timeperdedor); // Atualiza HUD do jogo
-    return rodada();
 }
 
 async function turno() {
 
+    turnonum++;
     let jogadoratual = gerenciadorDeJogadoresNosTurnos(); // Retorna o primeiro jogador na lista aleatória de quem começa,
     // depois joga o primeiro jogador para a última fileira e o próximo será o segundo
-    socketjogadoratual = jogadores[jogadoratual];
     let numpessoa = acharNumPessoa(jogadoratual)
+    socketjogadoratual = jogadores[jogadoratual];
     cartaSelecionada = undefined;
     playerjogoucarta = false;
     trukopressionado = false;
     eventStatusHandler = 'jogarcarta'
+    primeiroturno = false;
+
+    io.to(socketjogadoratual).emit('alterarvisibilidade', 'botaotruko');
 
     let carta = await obterCarta(jogadoratual,numpessoa);
-    console.log(carta)
-
+    // Se for jogada uma carta normal e nao apertado truko
     if (!(carta == 'Truko')) {
-        return carta
-    }
-    // TODO PROBLEMA AQUI!!!
-    let respostaTruko = trukoAcoes()
+        io.to(socketjogadoratual).emit('alterarvisibilidade', 'botaotruko');
+        console.log(`
+-=-=-=-=-=-=-=-=-=-=-=-=- Resumo do turno ${turnonum} -=-=-=-=-=-=-=-=-=-=-=-=- \n
+        Jogador atual: ${jogadoratual}
+        Socket atual: ${socketjogadoratual}
+        Truko: false
+        PlayerJogouCarta: ${playerjogoucarta}
+        Carta jogada: ${carta}
+        Cartas do jogador: ${cartassalvaspessoas[numpessoa-1]}
+-=-=-=-=-=-=-=-=-=-=-=-=-                   -=-=-=-=-=-=-=-=-=-=-=-=-
+        `.blue);
+        return carta;
 
-    console.log(respostaTruko)
-    if (respostaTruko == 'obtercarta'){
-        return await obterCarta(jogadoratual,numpessoa);
+
     }
-    else if (respostaTruko == 'mao'){
-        mao()
+
+    // Tratar tudo relacionado ao truko aceito
+    let respostaTruko = await trukoAcoes();
+
+    io.to(socketjogadoratual).emit('adicionarhidden', 'botaotruko');
+
+    if (respostaTruko == 'aceito'){
+        io.sockets.emit('atualizartexto', 'botaotrukotexto', '+3');
+
+        let posicao = times[timetrukado]['1'] === jogadoresQueResponderamAoTruko[0] ? '2' : '1';
+
+        io.to(jogadores[`${times[timetrukado][posicao]}`]).emit('adicionarhidden', 'positionbotoes');
+
+        // consorle.log(timetrukado, posicao, jogadoresQueResponderamAoTruko[0],times[timetrukado][posicao], jogadores[`${times[timetrukado][posicao]}`]);
+
+        eventStatusHandler = 'jogarcarta'
+        carta = await obterCarta(jogadoratual,numpessoa);
+        console.log(`
+-=-=-=-=-=-=-=-=-=-=-=-=- Resumo do turno ${turnonum} -=-=-=-=-=-=-=-=-=-=-=-=- \n
+        Jogador atual: ${jogadoratual}
+        Socket atual: ${socketjogadoratual}
+        Truko: true
+        TimeTrukado: ${timetrukado}
+        TimeTrukou: ${timetrukado === "Time1" ? "Time1" : "Time2"}
+        Resposta Truko: ${respostaTruko}
+        JogadoresQueResponderamTruko: ${jogadoresQueResponderamAoTruko}
+        PlayerJogouCarta: ${playerjogoucarta}
+        Carta jogada: ${carta}
+        Cartas do jogador: ${cartassalvaspessoas[numpessoa-1]}
+-=-=-=-=-=-=-=-=-=-=-=-=-                   -=-=-=-=-=-=-=-=-=-=-=-=-
+        `.blue);
+        return carta;
+    }
+
+    else if (respostaTruko == 'recusado'){
+        console.log(`
+-=-=-=-=-=-=-=-=-=-=-=-=- Resumo do turno ${turnonum} -=-=-=-=-=-=-=-=-=-=-=-=- \n
+        Jogador atual: ${jogadoratual}
+        Socket atual: ${socketjogadoratual}
+        Truko: true
+        TimeTrukado: ${timetrukado}
+        TimeTrukou: ${timetrukado === "Time1" ? "Time1" : "Time2"}
+        Resposta Truko: ${respostaTruko}
+        JogadoresQueResponderamTruko: ${jogadoresQueResponderamAoTruko}
+        Carta jogada: ${carta}
+        Cartas do jogador: ${cartassalvaspessoas[numpessoa-1]}
+-=-=-=-=-=-=-=-=-=-=-=-=-                   -=-=-=-=-=-=-=-=-=-=-=-=-
+        `.blue);
+        return 'mao';
     }
 
 }
 
 // Handler da carta jogada ou não jogada resumindo
-function obterCarta(jogadoratual,numpessoa){
+async function obterCarta(jogadoratual, numpessoa) {
 
-    io.to(socketjogadoratual).emit('alterarvisibilidade', 'botaotruko');
     io.sockets.emit('carregarbarradetempo', jogadoratual);
     let tempoesgotado = false;
 
-    return new Promise((promessa) => {
+    let cartaSelecionada1 = await new Promise((promessa) => {
         // Verifica a cada 100 ms se o jogador jogou uma carta, se ele jogou uma carta o checker acaba e o timeout de jogada automatica para também e ele retorna o .then do Promise, que retorna a carta que jogador jogou.
         intervaloVerificacao = setInterval(() => {
             if (playerjogoucarta) {
@@ -465,9 +580,8 @@ function obterCarta(jogadoratual,numpessoa){
                 clearTimeout(temporestante);
                 removerCarta(jogadoratual, cartajogada, numpessoa);
                 promessa(cartajogada);
-            }
-            else if (trukopressionado){
-                // trukopressionado = false; // Se não colocar false roda um loop infinito nas verificações
+            } else if (trukopressionado) {
+                trukopressionado = false; // Se não colocar false roda um loop infinito nas verificações
                 clearInterval(intervaloVerificacao);
                 clearTimeout(temporestante);
                 promessa("Truko");
@@ -475,18 +589,17 @@ function obterCarta(jogadoratual,numpessoa){
         }, 100);
 
         temporestante = setTimeout(() => {
-            console.log(`O jogador ${jogadoratual} não fez sua jogada! A primeira carta do baralho dele será jogada.`);
             if (!playerjogoucarta) {
                 clearInterval(intervaloVerificacao);
                 cartaSelecionada = jogarPrimeiraCarta(jogadoratual, numpessoa);
                 tempoesgotado = true;
-                promessa([cartaSelecionada]);
+                promessa(cartaSelecionada);
             }
         }, 10000);
-    }).then((cartaSelecionada) => {
-        io.sockets.emit('carregarbarradetempo', 'parartimer');
-        return cartaSelecionada;
     });
+    io.sockets.emit('carregarbarradetempo', 'parartimer');
+    return cartaSelecionada1;
+
 
 }
 
@@ -577,25 +690,43 @@ function zerarpontos(tipodeponto){
 // ____________________________REMOVE A CARTA DE UM JOGADOR____________________________
 function removerCarta(jogador, cartaremover, pessoa){
     let cartasjogador = eval(`cartaspessoa${pessoa}`); // Retorna a lista de cartas do jogador
-    let numerodacarta;
+    let numerodacarta = -1;
+
     for(let i = 0; i < 3; i++){
-        if(cartassalvaspessoas[pessoa-1][i][0] == cartaremover[0] && cartassalvaspessoas[pessoa-1][i][1] == cartaremover[1]){
-            let cartaremovida = cartasjogador.splice(i, 1); // Remove a carta que vai jogar da lista de cartas do jogador e salva em variável
-            cartassalvaspessoas[pessoa-1][i] = "Removido"; // Preenche o espaço da carta removida com removido para não bugar pela posição
+        if(cartassalvaspessoas[pessoa-1][i][0] === cartaremover[0] && cartassalvaspessoas[pessoa-1][i][1] === cartaremover[1]){
+            // Marca a carta como "Removido" em ambas as listas
+            cartassalvaspessoas[pessoa-1][i] = "Removido";
             numerodacarta = i;
-            console.log(`Removendo carta do jogador ${jogador}, ${cartaremovida}`.bgGreen);
-            console.log(`Cartas do jogador: ${cartassalvaspessoas[pessoa-1]}`.bgGreen);
-            break;
+            break; // Sai do loop após encontrar a carta
         }
     }
-    updateCartasUI(jogador, numerodacarta, cartassalvaspessoas[pessoa-1])
-    pontoparatimequejogoucarta.push(jogador);
+
+    if(numerodacarta !== -1){
+        updateCartasUI(jogador, numerodacarta, cartassalvaspessoas[pessoa-1]);
+        pontoparatimequejogoucarta.push(jogador);
+    } else {
+        console.error(`Carta ${cartaremover} não encontrada para o jogador ${jogador}`);
+    }
 }
 
 // ____________________________GIRA O TURNO DOS JOGADORES____________________________
 function gerenciadorDeJogadoresNosTurnos(){ // Gerencia o jogador atual no turno, seta a sequência de quem começa, roda a lista do turno
     let possibilidadesprimeirojogador;
     if (primeiroturno){
+        // se na rodada anterior teve um vencedor esse vencedor torna a carta
+        if(jogadorVencedorRodada){
+            let indexVencedor = listajogadoresturno.indexOf(jogadorVencedorRodada);
+
+            // Pega o index do nome do vencedor, coloca no começo e concatena com o resto dos nomes
+            let rotacionado = listajogadoresturno.slice(indexVencedor).concat(listajogadoresturno.slice(0, indexVencedor));
+            let jogador1 = rotacionado[0];
+            rotacionado.shift();
+            rotacionado.push(jogador1);
+
+            listajogadoresturno = rotacionado;
+            return jogadorVencedorRodada;
+        }
+
         possibilidadesprimeirojogador = [
             [times['Time1']['1'], times['Time2']['1'], times['Time1']['2'], times['Time2']['2']],
             [times['Time2']['1'], times['Time1']['1'], times['Time2']['2'], times['Time1']['2']],
@@ -603,13 +734,12 @@ function gerenciadorDeJogadoresNosTurnos(){ // Gerencia o jogador atual no turno
             [times['Time2']['2'], times['Time1']['2'], times['Time2']['1'], times['Time1']['1']]
         ];
         primeiroturno = false
-        listajogadoresturno = randomizar(possibilidadesprimeirojogador); // Randomiza as possibilidades para escolher quem começa o jogo
+        listajogadoresturno = randomizar(possibilidadesprimeirojogador)[0]; // Randomiza as possibilidades para escolher quem começa o jogo
     }
-    let jogador = listajogadoresturno[0]
-    let jogador1 = jogador[0] // Faz com que o primeiro jogador da lista seja salvo
-    jogador.shift() // Remove o primeiro jogador da lista
-    jogador.push(jogador1) // Coloca  primeiro jogador no fundo da lista
-    return jogador1
+    let jogador1 = listajogadoresturno[0]; // Faz com que o primeiro jogador da lista seja salvo
+    listajogadoresturno.shift(); // Remove o primeiro jogador da lista
+    listajogadoresturno.push(jogador1); // Coloca  primeiro jogador no fundo da lista
+    return jogador1;
 }
 
 // ____________________________ CHECA QUAL A CARTA MAIS FORTE DO TURNO ____________________________
@@ -626,7 +756,7 @@ function checkmaiorCarta(cartascheck, manilhacheck) {
     cartasForca[manilhaValor] = 10;
 
     let maiorvalor = -1;
-    let maiorcarta;
+    maiorcarta = null;
     let timevencedor;
     let empateCartas = []; // Lista para armazenar cartas empatadas
 
@@ -650,7 +780,6 @@ function checkmaiorCarta(cartascheck, manilhacheck) {
 
     // Resolver empate de cartas não manilhas
     if (empateCartas.length > 1 && maiorvalor < 10) { // Maiorvalor < 10 significa que não é manilha
-        console.log("Empate entre cartas não manilhas:", empateCartas);
         return "empate"; // Retornar estado de empate
     }
 
@@ -677,10 +806,8 @@ function checkmaiorCarta(cartascheck, manilhacheck) {
         }
     }
 
-    console.log("A maior carta da rodada é:", maiorcarta, "o time vencedor é:", timevencedor);
     return timevencedor;
 }
-
 
 function atualizarScoreboardPontos(timevencedor, timeperdedor){
     // Atualiza o scoreboardzinho dos círculos no html
@@ -696,85 +823,94 @@ function atualizarScoreboardPontos(timevencedor, timeperdedor){
 
 }
 
+//____________________________GERENCIA AÇÕES AO APERTAR TRUKO____________________________
+async function trukoAcoes() {
+    eventStatusHandler = 'trukoOpcoes';
+    trukoaceito = await trukoWaiter(); // Aguardar a resposta de trukoWaiter
 
-//____________________________GERENCIA AÇÕES AO APERTAR TRUKO____________________________ TODO PROBLEMA AQUI
-function trukoAcoes() {
+    io.sockets.emit('pedirtruko', 'parartimer', null);
+    jogadorescorrendo = 0;
+    io.sockets.emit('atualizartexto', 'valorpontosmao', valorpontosmao);
 
-   eventStatusHandler = 'trukoOpcoes';
+    io.to(socketjogadoratual).emit('alterarvisibilidade', 'botaotruko');
 
-   trukoaceito = trukoWaiter()
-
-   jogadorescorrendo = 0
-   io.sockets.emit('atualizartexto', 'valorpontosrodada', valorpontosrodada);
-   io.to(socketjogadoratual).emit('alterarvisibilidade', 'repostatruko');
-   // Checa se o truko foi aceito ou não, se foi aceito ele retorna para o meliante selecionar a carta
-   if (trukoaceito) {
-       return 'obtercarta'
-   } else {
-       return 'mao'
-   }
-
+    if (trukoaceito) {
+        return 'aceito';
+    }
+    else {
+        return 'recusado';
+    }
 }
 
+function encontrarJogadorComCarta(cartas, cartabuscada) {
+    let jogadoresNomes = [times['Time1']['1'], times['Time1']['2'], times['Time2']['1'], times['Time2']['2']];
 
-// Aguarda os jogadores selecionarem aceitar ou correr ou somar // TODO TALVEZ ESTEJA COM PROBLEMA?
-function trukoWaiter(){
+    // Itera sobre os jogadores de 1 a 4
+    for (let i = 0; i < cartas.length; i++) {
+        const jogadorNumero = i;
+        const cartasDoJogador = cartas[i];
+
+        for (let j = 0; j < cartasDoJogador.length; j++) {
+            const carta = cartasDoJogador[j];
+            // Verifica se a carta atual corresponde à carta buscada
+            if (carta[0] === cartabuscada[0] && carta[1] === cartabuscada[1]) {
+                return jogadoresNomes[jogadorNumero]; // Retorna o número do jogador
+            }
+        }
+    }
+    return null; // Retorna null se a carta não for encontrada
+}
+
+// Aguarda os jogadores selecionarem aceitar ou correr ou somar
+function trukoWaiter() {
     let tempoesgotado = false;
-    return new Promise((promessa) => {
 
-        intervaloVerificacao = setInterval(() => { // Checa o botão que o jogador enviou de truko, se não enviar = correu
-            if (jogadoresQueResponderamAoTruko.length == 2 || trukoaceito == true) {
+    trukoaceito = false; // resetar o truko aceito para não aceitar o truko direto na segunda tentativa de truko
+
+    io.sockets.emit('pedirtruko', 'truko', jogadoresPorId[socketjogadoratual]);
+    return new Promise(async (promessa) => {
+        intervaloVerificacao = setInterval(() => {
+            if (jogadoresQueResponderamAoTruko.length === 2 || trukoaceito === true) {
                 clearInterval(intervaloVerificacao);
                 clearTimeout(temporestante);
-                promessa(trukoaceito);
+                promessa(trukoaceito); // Resolver Promise conforme o valor de `trukoaceito`
             }
         }, 100);
 
         temporestante = setTimeout(() => {
-            if (jogadoresQueResponderamAoTruko.length == 2 || trukoaceito == true) {
+            if (!trukoaceito) {
                 clearInterval(intervaloVerificacao);
-                console.log(`Truko não foi aceito porque os jogadores demoraram de mais para aceitar/correr/+6`);
-                tempoesgotado = true;
-                promessa(trukoaceito);
+                console.log("Truko não foi aceito porque os jogadores demoraram demais para aceitar/correr/+6");
+                promessa(false); // Promise resolvida com `false` caso o tempo esgote
             }
         }, 15000);
-    }).then( () => {
-        io.sockets.emit('pedirtruko', 'parartimer', null);
-        return trukoaceito;
     });
 }
 
 // ____________________________GERENCIA AS AÇÕES DAS PESSOAS QUE RECEBERAM TRUKO____________________________
-function trukoActionHandler(action){
-    let timequepediutruko = timetrukado == "Time1" ? "Time2" : "Time1"
+function trukoActionHandler(action) {
+    let timequepediutruko = timetrukado === "Time1" ? "Time2" : "Time1";
 
-    console.log(`acao no trukohandler: ${action}`)
-    if(action == 'soma'){
-        valorpontosrodada = valorpontosrodada == 1 ? 6 : valorpontosrodada + 3;
+    if (action === 'soma') {
+        valorpontosmao = (valorpontosmao === 1 ? 6 : valorpontosmao + 6);
         trukoaceito = true;
-    }
-    else if(action == 'aceitar'){
-        valorpontosrodada = valorpontosrodada == 1 ? 3 : valorpontosrodada;
+    } else if (action === 'aceitar') {
+        valorpontosmao = (valorpontosmao === 1 ? 3 : valorpontosmao + 3);
         trukoaceito = true;
-    }
-    else if(action == 'correr'){
+    } else if (action === 'correr') {
         jogadorescorrendo++;
-        if(jogadorescorrendo == 2){
-            pontosmao[timequepediutruko] += pontosrodada
-            trukoaceito = true;
+        if (jogadorescorrendo === 2) {
+            pontosmao[timequepediutruko] += valorpontosmao;
+            trukoaceito = false;
         }
-        // mostrar que correu do truko
     }
-    console.log("jogadores correndo:",jogadorescorrendo, 'timequepdiutruko:',timequepediutruko, 'trukoaceito:',trukoaceito, 'acaoenviada',action)
 }
 
-// TODO - CONCERTAR PERSPECTIVA DE VISÃO DO JOGADOR 2, JOGADOR 1111 E 3333 ESTÃO INVERTIDOS
 // Atualiza as cartas dos jogadores na visão de cada um e a posição da carta na frente do jogador
 function updateCartasUI(jogadoratual, numcarta, cartasjogador){
 
     // Remove a carta na visão de 1º pessoa
     io.to(jogadores[jogadoratual]).emit('alterarvisibilidade', `c1pessoa${numcarta+1}carta`); // c1pessoa${numerodacarta+1}carta é o id no html da carta que o jogador selecionou
-    io.to(socketjogadoratual).emit('alterarvisibilidade', 'botaotruko');
 
     let posjogadoratual = nomejogadorestime.indexOf(jogadoratual)
     const poscartadeletar = cartasjogador.filter(element => element === "Removido").length;
@@ -817,6 +953,7 @@ function updateCartasUI(jogadoratual, numcarta, cartasjogador){
     }
     // Para quando a pessoa 3 clicar
     else if(nomejogadorestime[2] == jogadoratual){
+        //Pessoa 1
         io.to(jogadores[nomejogadorestime[0]]).emit('alterarvisibilidade', `cartajogadapessoa2`);
         io.to(jogadores[nomejogadorestime[0]]).emit('carregarimagem', `cartajogadapessoa2`, `images/cartas/${cartajogada[0]}_${cartajogada[1]}.png`);
         io.to(jogadores[nomejogadorestime[0]]).emit('alterarvisibilidade', `c2pessoa${poscartadeletar}carta`);
@@ -866,10 +1003,7 @@ function resetarEAtualizarScoreboard() {
     io.sockets.emit('carregarimagem', `outrotime3`, `images/circulo.png`);
 
     // Atualiza os pontos do lado dos círculos no html
-    console.log("Pontos mão abaixo:".bgWhite.black)
-    console.log(pontosmao["Time1"])
-    console.log(pontosmao["Time2"])
-    console.log("-=-=-=-=-=-=-=-=-=-".bgWhite.black)
+
     io.to(jogadores[times["Time1"]["1"]]).emit('atualizartexto', `seutimepontos`, `${pontosmao["Time1"]}`);
     io.to(jogadores[times["Time1"]["2"]]).emit('atualizartexto', `seutimepontos`, `${pontosmao["Time1"]}`);
     io.to(jogadores[times["Time1"]["1"]]).emit('atualizartexto', `outrotimepontos`, `${pontosmao["Time2"]}`);
@@ -879,11 +1013,17 @@ function resetarEAtualizarScoreboard() {
     io.to(jogadores[times["Time2"]["2"]]).emit('atualizartexto', `seutimepontos`, `${pontosmao["Time2"]}`);
     io.to(jogadores[times["Time2"]["1"]]).emit('atualizartexto', `outrotimepontos`, `${pontosmao["Time1"]}`);
     io.to(jogadores[times["Time2"]["2"]]).emit('atualizartexto', `outrotimepontos`, `${pontosmao["Time1"]}`);
+
+    io.sockets.emit('atualizartexto', 'valorpontosmao', 1);
+    io.sockets.emit('atualizartexto', 'botaotrukotexto', 'TRUKO');
+
 }
 
 // ____________________________FAZ AS AÇÕES DE QUEM VENCEU O JOGO____________________________
 function timeVencedor(time){
     // fazer a lógica de o que acontece quando algum time vence o jogo
+    let tempopausa = setTimeout(() => {}, 2000);
+
     console.log(`|----------------------------| \n
                  |         FIM DO JOGO        | \n
                  |----------------------------|`)
