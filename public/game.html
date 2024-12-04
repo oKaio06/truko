@@ -35,7 +35,7 @@
         <div id="pontosrodada">
             <div>
                 <p>Valor da rodada: </p>
-                <p id="valorpontosrodada">1</p>
+                <p id="valorpontosmao">1</p>
             </div>
         </div>
     </div>
@@ -97,7 +97,7 @@
         <img src='images/cartas/fundocarta.png' alt='' class="baralho"> <!-- O deck de baralho que fica do ladinho -->
         <!--            Barra de tempo do jogador-->
         <div style="position: absolute; bottom: 19.5rem; left: 36rem;">
-            <p id="turnojogadortempo">Turno de  Vazio</p>
+            <p id="turnojogadortempo">Turno de Vazio</p>
             <p id="temporestantejogada">Tempo</p>
             <div style="border: black 5px solid; background-color: gray; height: 20px; width: 200px;">
                 <div id="barrinha" style="background-color: lawngreen; height: 100%; width: 100%"></div>
@@ -106,7 +106,7 @@
         </div>
     </div>
     <div id='botaotruko' hidden>
-        <button class="button truko" onclick="botaoTruko()" style="position: absolute; left: 51rem; bottom: 26%">TRUKO</button> <!-- Botão de Truko-->
+        <button id='botaotrukotexto' class="button truko" onclick="botaoTruko()" style="position: absolute; left: 51rem; bottom: 26%">TRUKO</button> <!-- Botão de Truko-->
     </div>
     <div id="positionbotoes" hidden>
         <div id="botoes">
@@ -115,7 +115,7 @@
             <button class="button correr" onclick="trukoHandler('correr')">CORRER</button> <!-- Botão de Correr Truko-->
         </div>
     </div>
-    <div id="repostatruko" hidden>
+    <div id="repostatruko">
         <p id="respostajogador1" hidden>Aguardando Jogador...</p>
         <p id="respostajogador2" hidden>Aguardando Jogador...</p>
     </div>
